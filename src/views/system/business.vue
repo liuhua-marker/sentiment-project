@@ -270,7 +270,7 @@ export default {
         getChild(node.data.id).then(res => {
           const children = []
           res.data.forEach(e => {
-            // 修改的时候，树结构中剔除修改数据本身
+            // 编辑的时候，树结构中剔除编辑数据本身
             if (e.id !== this.business.id) {
               children.push({ id: e.id, name: e.name })
             }

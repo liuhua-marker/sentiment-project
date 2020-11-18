@@ -40,7 +40,7 @@ export function handleDelete(ids) {
     data: ids
   })
 }
-// 修改信息
+// 编辑信息
 export function confeventlabeldetail(data) {
   return request({
     url: `/yuqing-configuration/configuration/confeventlabeldetail/list`,

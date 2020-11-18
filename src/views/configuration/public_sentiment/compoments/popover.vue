@@ -1,35 +1,15 @@
 <template>
-  <div class="app-container">
-    <div class="app-tabs">
-      <span class="text">筛选</span>
-      <!-- 时间 -->
-      <el-popover
-        v-model="visibleTime"
-        placement="bottom-start"
-        trigger="click"
-      >
-        <div class="tab-body">
-          <div>
-            <el-radio
-              v-model="radio"
-              label="0"
-              @change="queryFrom"
-            >全部</el-radio>
-            <el-radio
-              v-model="radio"
-              label="1"
-              @change="queryFrom"
-            >当天</el-radio>
-            <el-radio
-              v-model="radio"
-              label="2"
-              @change="queryFrom"
-            >近3天</el-radio>
-            <el-radio
-              v-model="radio"
-              label="3"
-              @change="queryFrom"
-            >近7天</el-radio>
+  <div class="app">
+    <el-collapse v-model="activeName">
+      <el-collapse-item title="筛选" :name="1">
+        <!-- 时间 -->
+        <div class="box_change">
+          <span class="box_text">时间</span>
+          <div class="box_sx">
+            <el-radio v-model="radio" label="0">全部</el-radio>
+            <el-radio v-model="radio" label="1">当天</el-radio>
+            <el-radio v-model="radio" label="2">近3天</el-radio>
+            <el-radio v-model="radio" label="3">近7天</el-radio>
             <el-radio v-model="radio" label="4">自定义时间</el-radio>
             <span v-if="radio === '4'" style="margin-top: 20px">
               <el-date-picker
@@ -38,275 +18,335 @@
                 range-separator="至"
                 start-placeholder="开始日期"
                 end-placeholder="结束日期"
-                @change="queryFrom"
-                @focus="dateFocus"
-                @blur="dateBlur"
               />
             </span>
           </div>
         </div>
-        <el-button slot="reference" type="text">
-          <b class="demonstration">时间</b>
-          <span>{{ radioName }}</span>
-          <i class="el-icon-arrow-down el-icon--right" />
-          <span>|</span>
-        </el-button>
-      </el-popover>
-      <!-- 预警级别 -->
-      <el-popover
-        v-model="visibleLevel"
-        placement="bottom-start"
-        trigger="click"
-      >
-        <div>
-          <el-radio
-            v-for="(v, k, i) in optionContentGrade"
-            :key="i"
-            v-model="queryform.contentGrade"
-            :label="v"
-            @change="queryFrom"
-          >{{ k }}</el-radio>
+        <!-- 是否去重 -->
+        <div class="box_change">
+          <span class="box_text">是否去重</span>
+          <div class="box_sx">
+            <el-radio v-model="queryform.deduplicate" :label="false"
+              >去重</el-radio
+            >
+            <el-radio v-model="queryform.deduplicate" label="">不去重</el-radio>
+          </div>
         </div>
-        <el-button slot="reference" type="text">
-          <b class="demonstration">等级选择</b>
-          <span>{{ contentName }}</span>
-          <i class="el-icon-arrow-down el-icon--right" />
-          <span>|</span>
-        </el-button>
-      </el-popover>
-      <!-- 数据源类型 -->
-      <el-popover
-        v-model="visibleData"
-        placement="bottom-start"
-        trigger="click"
-      >
-        <div>
-          <el-radio
-            v-model="sourceType"
-            label="0"
-            @change="queryData"
-          >全部</el-radio>
-          <el-radio
-            v-for="item in optionsSource"
-            :key="item.sourceTypeId"
-            v-model="sourceType"
-            :label="item.typeCode"
-            @change="queryData(item.typeName)"
-          >{{ item.typeName }}</el-radio>
+        <!-- 预警级别 -->
+        <div class="box_change">
+          <span class="box_text">预警级别</span>
+          <div class="box_sx">
+            <el-checkbox-group v-model="queryform.contentGrades">
+              <el-checkbox
+                v-for="(v, k, i) in optionContentGrade"
+                :key="i"
+                :label="v"
+                >{{ k }}</el-checkbox
+              >
+            </el-checkbox-group>
+          </div>
         </div>
-        <el-button slot="reference" type="text" @click="sourceData">
-          <b class="demonstration">数据源类型</b>
-          <span>{{ dataName }}</span>
-          <i class="el-icon-arrow-down el-icon--right" />
-          <span>|</span>
-        </el-button>
-      </el-popover>
-      <!-- 倾向性查询 -->
-      <el-popover
-        v-model="visibleType"
-        placement="bottom-start"
-        trigger="click"
-      >
-        <div>
-          <el-radio
-            v-for="(val, key, i) in options"
-            :key="i"
-            v-model="queryform.emotionType"
-            :label="val"
-            @change="queryFrom"
-          >{{ key }}</el-radio>
+        <!-- 数据类型 -->
+        <div class="box_change">
+          <span class="box_text">数据类型</span>
+          <div class="box_sx">
+            <el-checkbox-group v-model="queryform.sourceTypes">
+              <el-checkbox
+                v-for="item in optionsSource"
+                :key="item.sourceTypeId"
+                :label="item.typeCode"
+                >{{ item.typeName }}</el-checkbox
+              >
+            </el-checkbox-group>
+          </div>
         </div>
-        <el-button slot="reference" type="text">
-          <b class="demonstration">倾向性</b>
-          <span>{{ typeName }}</span>
-          <i class="el-icon-arrow-down el-icon--right" />
-          <span>|</span>
-        </el-button>
-      </el-popover>
-      <!-- 去重 -->
-      <el-popover
-        v-model="visibleRepeat"
-        placement="bottom-start"
-        trigger="click"
-      >
-        <div>
-          <el-radio
-            v-model="removal"
-            label="0"
-            @change="queryFrom"
-          >重复</el-radio>
-          <el-radio
-            v-model="removal"
-            label="1"
-            @change="queryFrom"
-          >不重复</el-radio>
+        <!-- 情感类型 -->
+        <div class="box_change">
+          <span class="box_text">情感类型</span>
+          <div class="box_sx">
+            <el-checkbox-group v-model="queryform.emotionTypes">
+              <el-checkbox
+                v-for="(val, key, i) in options"
+                :key="i"
+                :label="val"
+                >{{ key }}</el-checkbox
+              >
+            </el-checkbox-group>
+          </div>
         </div>
-        <el-button slot="reference" type="text">
-          <b class="demonstration">重复信息</b>
-          <span>{{ removalName }}</span>
-          <i class="el-icon-arrow-down el-icon--right" />
-          <span>|</span>
-        </el-button>
-      </el-popover>
-      <!-- 传导关系 -->
-      <el-popover
-        v-model="visibleTransmission"
-        placement="bottom-start"
-        trigger="click"
-      >
-        <div class="box_sx">
-          <el-checkbox-group v-model="queryform.transmission">
-            <el-checkbox
-              v-for="item in optionsTransmission"
-              :key="item"
-              :label="item"
-            >{{ item }}</el-checkbox>
-          </el-checkbox-group>
-          <el-button
-            type="primary"
-            size="mini"
-            style="margin-top: 15px"
-            @click="queryFrom"
-          >确定</el-button>
+        <!-- 传导关系 -->
+        <div v-if="isChuandao" class="box_change">
+          <span class="box_text">传导关系</span>
+          <div class="box_sx">
+            <el-checkbox-group v-model="queryform.transmission">
+              <el-checkbox
+                v-for="item in optionsTransmission"
+                :key="item"
+                :label="item"
+                >{{ item }}</el-checkbox
+              >
+            </el-checkbox-group>
+          </div>
         </div>
-        <el-button slot="reference" type="text">
-          <b class="demonstration">传导关系</b>
-          <i class="el-icon-arrow-down el-icon--right" />
-        </el-button>
-      </el-popover>
-    </div>
+        <!-- 机构 --><!-- 部门 -->
+        <div
+          v-if="userInfo.orgId === '0' || userInfo.deptId === '0'"
+          class="box_change"
+        >
+          <div v-if="userInfo.orgId === '0' && isDept" class="box_line">
+            <span class="box_text">机构</span>
+            <el-select v-model="queryform.orgId" @change="systemDept">
+              <el-option
+                v-for="item in optionsSystem"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+          </div>
+          <div v-if="userInfo.deptId === '0' && isDept" class="box_line">
+            <span class="box_text">部门</span>
+            <el-select v-model="queryform.deptId" placeholder="全部">
+              <el-option
+                v-for="item in optionsSystemDept"
+                :key="item.id"
+                :label="item.deptName"
+                :value="item.id"
+              />
+            </el-select>
+          </div>
+        </div>
+        <!-- 目标公司 --><!-- 关键词 -->
+        <div v-if="isCompany" class="box_change">
+          <div class="box_line">
+            <span class="box_text">目标公司</span>
+            <el-autocomplete
+              v-model="queryform.targetCompany"
+              :fetch-suggestions="querySearchAsync"
+              placeholder="请输入关键字"
+              value-key="companyName"
+              @select="searchSelect"
+              class="input-with-select"
+            >
+              <template slot-scope="{ item }">
+                <div class="compare-name" v-html="item.companyName" />
+              </template>
+            </el-autocomplete>
+          </div>
+
+          <div class="box_line">
+            <span class="box_text">关键词</span>
+            <el-input
+              placeholder="请输入关键词"
+              v-model="queryform.keyword"
+              clearable
+            />
+          </div>
+        </div>
+        <div
+          v-if="userInfo.deptId !== '0' && !userInfo.isAdmin"
+          class="box_change"
+        >
+          <div class="box_line">
+            <span class="box_text">目标组合</span>
+            <el-select
+              v-model="queryform.companyCombSubId"
+              clearable
+              placeholder="请选择目标组合"
+            >
+              <el-option
+                v-for="item in optionsCompanyCombSub"
+                :key="item.companyCombSubId"
+                :label="item.subName"
+                :value="item.companyCombSubId"
+              />
+            </el-select>
+          </div>
+        </div>
+        <!-- 预警类型 目标组合-->
+        <div class="box_change">
+          <div v-if="isEvent" class="box_line">
+            <span class="box_text">事件标签</span>
+            <el-cascader
+              v-model="event"
+              :options="optionsLabel"
+              :props="{ multiple: true, checkStrictly: true, value: 'label' }"
+              clearable
+              filterable
+            >
+            </el-cascader>
+          </div>
+        </div>
+        <div class="box_change">
+          <div class="box_btn">
+            <el-button type="primary" size="mini" class="search" @click="queryFrom"
+              >查 询</el-button
+            >
+            <el-button class="search" size="mini" @click="reset">重 置</el-button>
+          </div>
+        </div>
+      </el-collapse-item>
+    </el-collapse>
   </div>
 </template>
 
 <script>
 import { confdatasourcetype } from '@/api/dashboard'
-import { getTransmitList } from '@/api/public_sentiment/public_sentiment_page'
-// import { parseTime } from '@/utils/index'
+import {
+  listByEventName,
+  listByTypeName,
+  getTransmitList,
+  getThreeLevelLabels,
+} from '@/api/public_sentiment/public_sentiment_page'
+import { system, systemDept } from '@/api/analysis/hot_analysis'
+import { listByCompanyName } from '@/api/public_sentiment/public_sentiment_page'
+import { confCompanyCombinationSubscribe } from '@/api/enterprise/enterpriseTotal'
 
 export default {
   name: 'Popover',
   props: {
     queryforms: {
       type: Object,
-      default: function() {
+      default: function () {
         return {
           pageNo: 1,
           pageSize: 10,
           deptId: '',
           orgId: '',
-          targetCompany: '',
-          contentGrade: '',
-          emotionType: '',
-          sourceType: '',
+          targetCompany: '', //目标公司
+          contentGrades: [], //预警级别
+          emotionTypes: [], //情感类型
+          sourceTypes: [], //数据类型
           startTime: '',
           endTime: '',
-          deduplicate: false,
-          transmission: []
+          deduplicate: '', //是否去重
+          analysisTimeSort: false, //是否按分析时间排序
+          signals: [], //预警类型
+          eventTypes: [], //事件类型 一级
+          eventNames: [], //事件名称  二级
+          eventWords: [], // 三级
+          transmission: [], //传导关系编码
+          keyword: '', //关键词查询
         }
-      }
-    }
+      },
+    },
+    isEvent: {
+      type: Boolean,
+      default: true,
+    },
+    isDept: {
+      type: Boolean,
+      default: false,
+    },
+    isCompany: {
+      type: Boolean,
+      default: true,
+    },
+    isChuandao: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
-      visibleTransmission: false,
-      visibleTime: false,
-      visibleLevel: false,
-      visibleData: false,
-      visibleRepeat: false,
-      visibleType: false,
-      // 表单数据
+      activeName: 1,
+      loadingEvent: false,
       queryform: this.queryforms,
       optionContentGrade: {
-        全部: '',
         零级: '0',
         一级: '1',
         二级: '2',
         三级: '3',
         四级: '4',
-        五级: '5'
+        五级: '5',
       },
       radio: '0',
-      radioName: '全部',
-      radioTime: '0',
-      sourceType: '0',
-      dataName: '全部',
-      removal: '1',
-      removalName: '不重复',
-      contentName: '全部',
-      typeName: '全部',
       time: '',
       optionsSource: [],
-      optionsTransmission: [],
       options: {
-        全部: '',
         正面: 1,
         中性: 0,
-        负面: -1
-      }
+        负面: -1,
+      },
+      optionsCompanyCombSub: [], // 组合预警
+      optionsEventTypes: [], // 预警类型
+      optionsEventNames: [], // 事件标签
+      optionsTransmission: [], // 传导关系
+      optionsSystem: [], // 机构
+      optionsSystemDept: [], //部门
+      optionsLabel: [],
+      event: [],
     }
   },
   watch: {
     queryforms: {
+      // 深度监听，可监听到对象、数组的变化
       handler(val) {
+        // do something, 可使用this
         this.queryform = val
-        if (this.queryform.startTime === '' && this.queryform.endTime === '') {
-          this.radio = '0'
-          this.radioName = '全部'
-        }
-        if (!this.queryform.deduplicate) {
-          this.removal = '1'
-          this.removalName = '不重复'
-        }
-        if (!this.queryform.sourceType === '') {
-          this.sourceType = '0'
-          this.dataName = '全部'
-        }
-        if (!this.queryform.emotionType === '') {
-          this.typeName = '全部'
-        }
-        if (!this.queryform.contentGrade === '') {
-          this.contentName = '全部'
-        }
       },
-      deep: true
+      deep: true,
     },
-    'queryforms.deptId': {
-      handler(newValue, oldValue) {
-        this.visibleTransmission = false
-        this.visibleTime = false
-        this.visibleLevel = false
-        this.visibleData = false
-        this.visibleRepeat = false
-        this.visibleType = false
-      },
-      deep: true
-    }
   },
   created() {
     // 获取管理员身份
     this.userInfo = this.$store.getters.userInfo
-    // 获取页面数据
-    if (this.queryform.deduplicate === '') {
-      this.removal = '0'
-      this.removalNmae = '重复'
-    } else {
-      this.removal = '1'
-      this.removalNmae = '不重复'
+    if (this.userInfo.orgId !== '0') {
+      this.queryform.orgId = this.userInfo.orgId
+      this.queryform.deptId = this.userInfo.deptId
     }
-    this.getTransmitList()
+    this.getCreat()
   },
   methods: {
+    async getCreat() {
+      if (this.userInfo.orgId === '0' && this.isDept) {
+        await this.systemOrg()
+      }
+      if (this.userInfo.deptId !== '0' && !this.userInfo.isAdmin) {
+        await this.getSub()
+      }
+      // 获取页面数据
+      this.getLabel()
+      this.sourceData()
+      setTimeout(() => {
+        this.getTransmitList()
+      }, 1000)
+    },
     // 标准的时间格式转为时间戳
     dateToMs(date) {
       const result = new Date(date).getTime()
       return result
     },
+    // 部门
+    systemDept() {
+      const orgId = { orgIds: [this.queryform.orgId] }
+      systemDept(orgId).then((res) => {
+        this.optionsSystemDept = res.rows
+        this.queryform.deptId = res.rows[0].id
+      })
+    },
+    // 机构
+    systemOrg() {
+      const data = {}
+      system(data).then((res) => {
+        this.optionsSystem = res.rows
+        this.queryform.orgId = res.rows[0].id
+        this.systemDept()
+      })
+    },
+    // 监控组合
+    getSub() {
+      confCompanyCombinationSubscribe({}).then((res) => {
+        this.optionsCompanyCombSub = res.rows
+        this.queryform.companyCombSubId = res.rows[0].companyCombSubId
+      })
+    },
     // 数据类型
     sourceData() {
       const solutionForm = {
-        deptId: this.queryform.deptId,
+        deptId: this.userInfo.deptId,
         pageNo: 1,
-        pageSize: 100
+        pageSize: 100,
       }
       if (!this.visibleData) {
         confdatasourcetype(solutionForm).then((res) => {
@@ -316,133 +356,214 @@ export default {
     },
     // 传导关系
     getTransmitList() {
-      this.queryform.transmission = []
       getTransmitList().then((res) => {
         this.optionsTransmission = res.data
+        if (this.isChuandao) {
+          this.queryform.transmission = res.data
+        }
+        this.$emit('RefreshData', this.queryform)
       })
     },
-    dateFocus() {
-      this.visibleTime = true
+    // 事件标签
+    getLabel() {
+      getThreeLevelLabels().then((res) => {
+        this.optionsLabel = res.data
+      })
     },
-    dateBlur() {
-      // this.visibleTime = true
-      if (this.time.length <= 0) {
-        this.time = ''
-        if (this.radioName === '全部') {
-          this.radio = '0'
-        } else if (this.radioName === '当天') {
-          this.radio = '1'
-        } else if (this.radioName === '近3天') {
-          this.radio = '2'
-        } else if (this.radioName === '近7天') {
-          this.radio = '3'
+    // 公司名提示
+    querySearchAsync(val, cb) {
+      const queryString = val.trim()
+      if (queryString.trim().length > 1) {
+        if (this.timer) {
+          clearTimeout(this.timer)
         }
+        this.timer = setTimeout(() => {
+          this.getCompanyName(queryString, cb)
+        }, 100)
+      } else {
+        this.restaurants = []
+        cb(this.restaurants)
       }
     },
-    queryData(val) {
-      if (this.sourceType === '0') {
-        this.queryform.sourceType = ''
-        this.dataName = '全部'
-      } else {
-        this.queryform.sourceType = this.sourceType
-        this.dataName = val
+    getCompanyName(name, cb) {
+      this.loadingEvent = true
+      this.restaurants = []
+      const data = {
+        companyName: name,
+        pageNo: 1,
+        pageSize: 5,
       }
-      this.RefreshData()
-      this.loading = true
-      this.visibleData = false
+      listByCompanyName(data).then((res) => {
+        this.restaurants = res.rows
+        const reg = new RegExp(name, 'g')
+        this.restaurants.forEach((item) => {
+          item.companyName = item.companyName.replace(
+            reg,
+            `<span style="color: #ff4949">${name}</span>`
+          )
+        })
+        this.loadingEvent = false
+        cb(this.restaurants)
+      })
+    },
+    searchSelect() {
+      this.queryform.targetCompany = this.queryform.targetCompany
+        .replace(/<[^>]*>/g, '')
+        .trim()
     },
     queryFrom(val) {
       this.queryform.pageNo = 1
-      // 预警级别
-      for (const key in this.optionContentGrade) {
-        if (this.queryform.contentGrade === this.optionContentGrade[key]) {
-          this.contentName = key
-        }
-      }
-      for (const key in this.options) {
-        if (this.queryform.emotionType === this.options[key]) {
-          this.typeName = key
-        }
-      }
+      // 时间
+      const today = new Date(
+        new Date(new Date().toLocaleDateString()).getTime()
+      )
       if (this.radio === '0') {
-        this.radioName = '全部'
         this.time = ''
         this.queryform.startTime = ''
         this.queryform.endTime = ''
       } else if (this.radio === '1') {
-        this.radioName = '当天'
         this.time = ''
-        const today = new Date(
-          new Date(new Date().toLocaleDateString()).getTime()
-        )
         this.queryform.startTime = this.dateToMs(today)
         this.queryform.endTime = new Date().getTime()
       } else if (this.radio === '2') {
-        this.radioName = '近3天'
         this.time = ''
-        const today = new Date(
-          new Date(new Date().toLocaleDateString()).getTime()
-        )
         this.queryform.startTime =
           this.dateToMs(today) - 2 * 24 * 60 * 60 * 1000
         this.queryform.endTime = new Date().getTime()
       } else if (this.radio === '3') {
-        this.radioName = '近7天'
         this.time = ''
-        const today = new Date(
-          new Date(new Date().toLocaleDateString()).getTime()
-        )
         this.queryform.startTime =
           this.dateToMs(today) - 6 * 24 * 60 * 60 * 1000
         this.queryform.endTime = new Date().getTime()
       } else if (this.radio === '4') {
-        this.radioName = '自定义时间'
         this.queryform.startTime = this.dateToMs(this.time[0])
         this.queryform.endTime =
           this.dateToMs(this.time[1]) + 24 * 60 * 60 * 1000
       }
-      if (this.removal === '0') {
-        this.queryform.deduplicate = ''
-        this.removalName = '重复'
-      } else {
-        this.queryform.deduplicate = false
-        this.removalName = '不重复'
-      }
+      // 事件标签
+      this.queryform.eventTypes = []
+      this.queryform.eventNames = []
+      this.queryform.eventWords = []
+      this.event.forEach((item) => {
+        if (item.length === 1) {
+          this.queryform.eventTypes.push(item[0])
+        } else if (item.length === 2) {
+          this.queryform.eventNames.push(item[1])
+        } else if (item.length === 3) {
+          this.queryform.eventWords.push(item[2])
+        }
+      })
       this.RefreshData()
-      this.visibleTime = false
-      this.visibleLevel = false
-      this.visibleRepeat = false
-      this.visibleType = false
-      this.visibleTransmission = false
+    },
+    reset() {
+      this.queryform.pageNo = 1
+      this.queryform.pageSize = 10
+      if (this.optionsSystemDept.length > 0) {
+        this.queryform.deptId = this.optionsSystemDept[0].id
+      }
+      if (this.optionsSystem.length > 0) {
+        this.queryform.orgId = this.optionsSystem[0].id
+      }
+      if (this.userInfo.deptId !== '0' && !this.userInfo.isAdmin) {
+        this.queryform.companyCombSubId = this.optionsCompanyCombSub[0].companyCombSubId
+      }
+      this.radio = '0'
+      this.time = ''
+      if (this.isCompany) {
+        this.queryform.targetCompany = ''
+      }
+      this.queryform.contentGrades = [] //预警级别
+      this.queryform.emotionTypes = [] //情感类型
+      this.queryform.sourceTypes = [] //数据类型
+      this.queryform.startTime = ''
+      this.queryform.endTime = ''
+      this.queryform.deduplicate = false //是否去重
+      this.queryform.eventTypes = []
+      this.queryform.eventNames = []
+      this.queryform.eventWords = []
+      this.event = []
+      this.queryform.analysisTimeSort = false //是否按分析时间排序
+      if (this.isChuandao) {
+        this.queryform.transmission = this.optionsTransmission //传导关系编码
+      }
+      this.queryform.keyword = ''
+      this.RefreshData()
     },
     RefreshData() {
-      this.$emit('RefreshData')
-    }
-  }
+      this.$emit('RefreshData', this.queryform)
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  .app-tabs {
-    .text {
-      color: #409eff;
-      font-size: 16px;
-      font-weight: 600;
+.app {
+  margin-top: 0.1rem;
+  .el-collapse {
+    border-top: 0;
+  }
+  /deep/ .el-collapse-item__content {
+    padding-bottom: 0.2rem;
+  }
+  .el-collapse-item {
+    border-radius: 0.05rem;
+    overflow: hidden;
+  }
+  /deep/.el-collapse-item__wrap {
+    border-bottom: 0;
+  }
+  /deep/ .el-collapse-item__header {
+    // background: #f8f8f9;
+    background: #fff;
+    font-size: 0.14rem;
+    padding-left: 0.3rem;
+    height: 0.3rem;
+    color: #409eff;
+    border-bottom: 0;
+  }
+  .box_change {
+    padding: 0.05rem 0;
+    margin: 0 0.3rem;
+    // border-bottom: 1px solid #eee;
+    .box_text {
+      display: inline-block;
+      width: 85px;
+      box-sizing: border-box;
+      padding-right: 15px;
+      text-align: right;
     }
-    .app-label {
-      margin: 0 45px;
-    }
-    .tab-body {
-      .tab-time {
-        margin-right: 20px;
-        font-size: 14px;
+    .box_btn {
+      // text-align: center;
+      .search {
+        font-size: 0.16rem;
+      }
+      .search:first-child {
+        margin-left: 800px;
       }
     }
-    .demonstration {
-      font-size: 14px;
-      margin: 20px;
-    }
+  }
+  .box_line {
+    display: inline-block;
+    margin-right: 20px;
+  }
+  .box_sx {
+    display: inline-block;
+    min-width: 5rem;
+  }
+  .el-input,
+  .el-select,
+  .el-autocomplete {
+    display: inline-block;
+    width: 300px;
+  }
+  .el-cascader {
+    display: inline-block;
+    width: 705px;
+  }
+  /deep/.el-cascader__tags {
+    max-height: 100px;
+    overflow: hidden;
+    overflow-y: scroll;
   }
 }
 </style>

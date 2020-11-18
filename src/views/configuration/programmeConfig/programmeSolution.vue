@@ -1,60 +1,9 @@
 <template>
-  <div class="app-container box">
+  <div>
     <!-- 搜索查询 -->
-    <div class="app-tabs">
-      <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="机构:">
-          <el-select v-model="queryForm.orgId" clearable placeholder="全部" @change="changeOrg">
-            <el-option
-              v-for="item in optionOrg"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="部门:">
-          <el-select v-model="queryForm.deptId" clearable placeholder="全部" @change="getQuanIndex">
-            <el-option
-              v-for="item in optionDept"
-              :key="item.id"
-              :label="item.deptName"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="app-table">
-      <h4>方案配置列表</h4>
-
-      <el-table v-loading="loading" :data="quanWordList" class="app-table-list" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column label="机构名称" prop="orgName" />
-        <el-table-column label="部门名称" prop="deptName" />
-        <el-table-column label="方案名称" prop="solutionName" />
-        <el-table-column label="选择" width="220">
-          <template slot-scope="scope">
-            <el-button type="primary" size="small" @click="handleAddOrUpdate(scope.row)">配置</el-button>
-            <el-button type="danger" size="small" @click="handleReset(scope.row)">重置</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryForm.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryForm.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
-
-    <!-- 新增与修改的对话框 -->
+    <listFilters ref="listFilter" :options="filterOption" @change="queryQuanIndex" />
+    <list-table ref="listTable" :options="tableData" @command="listCommand" />
+    <!-- 配置对话框 -->
     <el-dialog
       :close-on-click-modal="false"
       title="方案管理："
@@ -76,7 +25,11 @@
           <el-input v-model.trim="addRuleForm.deptName" :disabled="true" />
         </el-form-item>
         <el-form-item label="方案名称：" prop="solutionId">
-          <el-select v-model="addRuleForm.solutionId" placeholder="请选择" @change="changSolution">
+          <el-select
+            v-model="addRuleForm.solutionId"
+            placeholder="请选择"
+            @change="isSolution = false"
+          >
             <el-option
               v-for="item in optionSoultion"
               :key="item.solutionId"
@@ -93,7 +46,8 @@
           type="primary"
           :disabled="isSolution"
           @click="addQuanIndexFrom"
-        >{{ loadBtnName }}</el-button>
+          >{{ loadBtnName }}</el-button
+        >
       </span>
     </el-dialog>
   </div>
@@ -103,37 +57,83 @@
 import {
   solutionList,
   configuration,
-  resetSolution
+  resetSolution,
 } from '@/api/programme/programmeSolution'
 import { getBusinesss } from '@/api/business'
 import { systemDept } from '@/api/analysis/hot_analysis'
 import { page } from '@/api/programme/programme'
-// import Pagination from '@/components/Pagination'
-// import { getToken } from '@/utils/auth'
+import listTable from '@/components/table/listTable'
+import listFilters from '@/components/filter/listFilters'
 
 export default {
   name: 'ProgrammeSolution',
-  // components: { Pagination },
+  components: { listFilters, listTable },
 
   data() {
     return {
+      filterOption: [
+        {
+          componentsName: 'el-select',
+          label: '机构',
+          paramsName: 'orgId',
+          placeholder: '全部',
+          options: [],
+        },
+      ],
+      tableData: {
+        title: '方案配置列表',
+        listApi: {
+          serviceFN: solutionList, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '机构名称', // 表头名称
+            propName: 'orgName', // 查询返回的字段名
+          },
+          {
+            label: '部门名称',
+            propName: 'deptName',
+          },
+          {
+            label: '方案名称',
+            propName: 'solutionName',
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '配置',
+                commandName: 'handleAddOrUpdate',
+                type: 'primary',
+              },
+              {
+                label: '重置',
+                commandName: 'handleReset',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+
       loadBtnName: '确 定',
       loadBtn: false,
-      loading: true,
       isSolution: true,
       // 表单数据
-      quanWordList: [],
-      optionOrg: [],
-      optionDept: [],
       optionSoultion: [],
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
         orgId: '',
-        deptId: ''
+        deptId: '',
       },
-      total: 0,
-      // 新增与修改数据
+      // 新增与编辑数据
       addDialogVisible: false,
       addRuleForm: { solutionId: '' },
       // 验证规则
@@ -141,9 +141,9 @@ export default {
         solutionId: {
           required: true,
           message: '请选择方案',
-          trigger: 'change'
-        }
-      }
+          trigger: 'blur',
+        },
+      },
     }
   },
   created() {
@@ -154,63 +154,45 @@ export default {
   methods: {
     getTypeList() {
       getBusinesss({}).then((res) => {
-        this.optionOrg = res.rows
+        this.filterOption[0].options = []
+        res.rows.forEach((item) => {
+          let option = { value: item.id, label: item.name }
+          this.filterOption[0].options.push(option)
+        })
       })
       page({}).then((res) => {
         this.optionSoultion = res.rows
       })
     },
-    // 选择机构
-    changeOrg(v) {
-      this.loading = true
-      this.queryForm.pageNo = 1
-      this.queryForm.deptId = ''
-      this.getDept()
-      this.getQuanIndex()
-    },
-    getDept() {
-      const orgId = { orgIds: [this.queryForm.orgId] }
-      systemDept(orgId).then((res) => [(this.optionDept = res.rows)])
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
     },
     // 获取页面数据
-    async getQuanIndex() {
-      const data = await solutionList(this.queryForm)
-      this.quanWordList = data.rows
-      this.quanWordList.forEach((item) => {
-        item.id = item.solutionId
-        item.solutionId = item.parentSolutionId
+    getQuanIndex() {
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
       })
-
-      this.total = data.total
-      this.loading = false
     },
     // 查询
     queryQuanIndex(v) {
-      this.loading = true
-      this.queryForm.pageNo = 1
-      this.getQuanIndex()
-    },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getQuanIndex()
-    },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
+      this.queryForm.orgId = v.orgId
+      this.queryForm.deptId = v.deptId
       this.getQuanIndex()
     },
     // 配置
     handleAddOrUpdate(res) {
-      this.addDialogVisible = true
+      if (res.parentSolutionId) {
+        res.solutionId = res.parentSolutionId
+      } else {
+        res.solutionId = ''
+      }
       this.addRuleForm = JSON.parse(JSON.stringify(res))
-    },
-    changSolution() {
-      this.isSolution = false
+      this.addDialogVisible = true
     },
     addQuanIndexFrom() {
-      this.$refs.addRuleForm.validate(async(valid) => {
+      this.$refs.addRuleForm.validate(async (valid) => {
         this.loadBtn = true
         this.loadBtnName = '加载中'
         if (!valid) return
@@ -221,12 +203,14 @@ export default {
         ).then((res) => {
           this.loadBtn = false
           this.loadBtnName = '确 定'
-          this.$message({
-            type: 'success',
-            message: '操作成功'
-          })
-          this.clearDialog() // 关闭表单
-          this.getQuanIndex() // 刷新列表
+          if (res.code === 200) {
+            this.$message({
+              type: 'success',
+              message: '操作成功',
+            })
+            this.clearDialog() // 关闭表单
+            this.getQuanIndex() // 刷新列表
+          }
         })
       })
     },
@@ -235,13 +219,13 @@ export default {
       this.$confirm('确定重置方案吗?重置后内容不可恢复', '提示', {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
       }).then(() => {
-        resetSolution(row.id).then((res) => {
+        resetSolution(row.solutionId).then((res) => {
           if (res.code === 200) {
             this.$message({
               type: 'success',
-              message: '方案重置成功'
+              message: '方案重置成功',
             })
           }
         })
@@ -250,27 +234,12 @@ export default {
     clearDialog() {
       this.addDialogVisible = false
       this.isSolution = true
-    }
-  }
+      this.loadBtn = false
+      this.loadBtnName = '确 定'
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  .app-tabs {
-    margin-top: 20px;
-  }
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-    .app-table-list {
-      width: 100%;
-      margin: 20px 0;
-    }
-  }
-  .pagination {
-    text-align: right;
-  }
-}
 </style>

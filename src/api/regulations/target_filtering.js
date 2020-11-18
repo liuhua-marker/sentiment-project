@@ -34,7 +34,7 @@ export function handleDelete(ids) {
     data: ids
   })
 }
-// 修改信息
+// 编辑信息
 export function editeQuanIndexFrom(data) {
   return request({
     url: `/yuqing-configuration/conftargetrules/update`,

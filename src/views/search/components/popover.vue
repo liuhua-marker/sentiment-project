@@ -1,10 +1,10 @@
 <template>
   <div class="app">
-    <el-collapse>
-      <el-collapse-item title="高级筛选" name="1">
+    <el-collapse v-model="active">
+      <el-collapse-item title="高级筛选" :name="1">
         <!-- 时间 -->
         <div class="box_change">
-          <span class="box_text">时间：</span>
+          <span class="box_text">时间</span>
           <div class="box_sx">
             <el-radio v-model="radio" label="0">全部</el-radio>
             <el-radio v-model="radio" label="1">当天</el-radio>
@@ -24,119 +24,81 @@
         </div>
         <!-- 是否去重 -->
         <div class="box_change">
-          <span class="box_text">是否去重：</span>
+          <span class="box_text">是否去重</span>
           <div class="box_sx">
-            <el-radio v-model="queryform.deduplicate" label="">去重</el-radio>
-            <el-radio
-              v-model="queryform.deduplicate"
-              :label="false"
-            >不去重</el-radio>
+            <el-radio v-model="queryform.deduplicate" :label="false">去重</el-radio>
+            <el-radio v-model="queryform.deduplicate" label="">不去重</el-radio>
           </div>
         </div>
         <!-- 预警级别 -->
         <div class="box_change">
-          <span class="box_text">预警级别：</span>
+          <span class="box_text">预警级别</span>
           <div class="box_sx">
-            <el-checkbox-group v-model="queryform.contentGrade">
+            <el-checkbox-group v-model="queryform.contentGrades">
               <el-checkbox
                 v-for="(v, k, i) in optionContentGrade"
                 :key="i"
                 :label="v"
-              >{{ k }}</el-checkbox>
+                >{{ k }}</el-checkbox
+              >
             </el-checkbox-group>
           </div>
         </div>
-        <!-- 数据源类型 -->
+        <!-- 数据类型 -->
         <div class="box_change">
-          <span class="box_text">数据源类型：</span>
+          <span class="box_text">数据类型</span>
           <div class="box_sx">
-            <el-checkbox-group v-model="queryform.sourceType">
+            <el-checkbox-group v-model="queryform.sourceTypes">
               <el-checkbox
                 v-for="item in optionsSource"
                 :key="item.sourceTypeId"
                 :label="item.typeCode"
-              >{{ item.typeName }}</el-checkbox>
+                >{{ item.typeName }}</el-checkbox
+              >
             </el-checkbox-group>
           </div>
         </div>
-        <!-- 倾向性查询 -->
+        <!-- 情感类型 -->
         <div class="box_change">
-          <span class="box_text">倾向性查询：</span>
+          <span class="box_text">情感类型</span>
           <div class="box_sx">
-            <el-checkbox-group v-model="queryform.emotionType">
+            <el-checkbox-group v-model="queryform.emotionTypes">
               <el-checkbox
                 v-for="(val, key, i) in options"
                 :key="i"
                 :label="val"
-              >{{ key }}</el-checkbox>
+                >{{ key }}</el-checkbox
+              >
             </el-checkbox-group>
           </div>
         </div>
         <!-- 传导关系 -->
         <div class="box_change">
-          <span class="box_text">传导关系：</span>
+          <span class="box_text">传导关系</span>
           <div class="box_sx">
             <el-checkbox-group v-model="queryform.transmission">
               <el-checkbox
                 v-for="item in optionsTransmission"
                 :key="item"
                 :label="item"
-              >{{ item }}</el-checkbox>
+                >{{ item }}</el-checkbox
+              >
             </el-checkbox-group>
           </div>
         </div>
-        <!-- 预警类型 -->
         <div class="box_change">
-          <span class="box_text">预警类型：</span>
-          <el-select
-            v-model="queryform.eventTypeCode"
-            :loading="loadingEvent"
-            multiple
-            filterable
-            remote
-            clearable
-            reserve-keyword
-            placeholder="预警类型"
-            :remote-method="remoteMethod"
-            class="box_sx"
-          >
-            <el-option
-              v-for="item in optionsEventTypes"
-              :key="item.eventTypeId"
-              :label="item.eventType"
-              :value="item.eventCode"
-            />
-          </el-select>
-        </div>
-        <!-- 事件名称 -->
-        <!-- <div class="box_change">
-          <span class="box_text">事件名称：</span>
-          <el-select
-            v-model="queryform.emotionType"
-            :loading="loadingEvent"
-            multiple
-            filterable
-            remote
-            clearable
-            reserve-keyword
-            placeholder="事件名称"
-            :remote-method="remoteEventNames"
-            class="box_sx"
-          >
-            <el-option
-              v-for="item in optionsEventNames"
-              :key="item.eventId"
-              :label="item.eventName"
-              :value="item.eventName"
-            />
-          </el-select>
-        </div>-->
-        <div class="box_change">
-          <el-button
-            type="primary"
-            class="search"
-            @click="queryFrom"
-          >查 询</el-button>
+          <div class="box_btn">
+            <el-button
+              type="primary"
+              size="mini"
+              class="search"
+              @click="queryFrom"
+              >查 询</el-button
+            >
+            <el-button class="search" size="mini" @click="reset"
+              >重 置</el-button
+            >
+          </div>
         </div>
       </el-collapse-item>
     </el-collapse>
@@ -148,30 +110,49 @@ import { confdatasourcetype } from '@/api/dashboard'
 import {
   listByEventName,
   listByTypeName,
-  getTransmitList
+  getTransmitList,
 } from '@/api/public_sentiment/public_sentiment_page'
-// import { parseTime } from '@/utils/index'
+import { system, systemDept } from '@/api/analysis/hot_analysis'
 
 export default {
   name: 'Popover',
   props: {
     queryforms: {
       type: Object,
-      default: function() {
+      default: function () {
         return {
           pageNo: 1,
           pageSize: 10,
-          companyName: '', // 公司名
-          contentGrade: [], // 预警级别
-          emotionType: [],
-          endTime: 0, // 时间
-          eventTypeCode: [], // 事件类型
-          sourceType: [], // 数据源类型
-          startTime: 0, // 时间
-          transmission: []
+          deptId: '',
+          orgId: '',
+          targetCompany: '', //目标公司
+          contentGrades: [], //预警级别
+          emotionTypes: [], //情感类型
+          sourceTypes: [], //数据类型
+          startTime: '',
+          endTime: '',
+          deduplicate: '', //是否去重
+          analysisTimeSort: false, //是否按分析时间排序
+          signals: [], //预警类型
+          eventTypes: [], //事件类型
+          eventNames: [], //事件名称
+          transmission: [], //传导关系编码
+          keyword: '', //关键词查询
         }
-      }
-    }
+      },
+    },
+    isEvent: {
+      type: Boolean,
+      default: true,
+    },
+    isDept: {
+      type: Boolean,
+      default: false,
+    },
+    activeName: {
+      type: Number,
+      default: 0,
+    },
   },
   data() {
     return {
@@ -184,7 +165,7 @@ export default {
         二级: '2',
         三级: '3',
         四级: '4',
-        五级: '5'
+        五级: '5',
       },
       radio: '0',
       time: '',
@@ -192,11 +173,10 @@ export default {
       options: {
         正面: 1,
         中性: 0,
-        负面: -1
+        负面: -1,
       },
-      optionsEventTypes: [],
-      optionsEventNames: [],
-      optionsTransmission: []
+      optionsTransmission: [], // 传导关系
+      active: 0
     }
   },
   watch: {
@@ -206,7 +186,10 @@ export default {
         // do something, 可使用this
         this.queryform = val
       },
-      deep: true
+      deep: true,
+    },
+    activeName(e) {
+      this.active = e
     }
   },
   created() {
@@ -227,7 +210,7 @@ export default {
       const solutionForm = {
         deptId: this.userInfo.deptId,
         pageNo: 1,
-        pageSize: 100
+        pageSize: 100,
       }
       if (!this.visibleData) {
         confdatasourcetype(solutionForm).then((res) => {
@@ -239,55 +222,9 @@ export default {
     getTransmitList() {
       getTransmitList().then((res) => {
         this.optionsTransmission = res.data
+        this.queryform.transmission = res.data
+        this.$emit('RefreshData', this.queryform)
       })
-    },
-    // 事件类型查询
-    remoteMethod(query) {
-      if (query !== '') {
-        this.loadingEvent = true
-        const data = {
-          pageNo: 1,
-          pageSize: 100,
-          eventType: query
-        }
-        listByTypeName(data).then((res) => {
-          if (res.code === 200) {
-            setTimeout(() => {
-              this.loadingEvent = false
-              this.optionsEventTypes = res.rows.filter((item) => {
-                return item.eventType.indexOf(query) > -1
-              })
-            }, 200)
-          }
-        })
-      } else {
-        this.optionsEventTypes = []
-      }
-    },
-    // 事件词
-    remoteEventNames(query) {
-      if (query !== '') {
-        this.loadingEvent = true
-        const data = {
-          pageNo: 1,
-          pageSize: 100,
-          eventName: query,
-          eventTypes: this.queryForm.eventTypes,
-          deptId: this.userInfo.deptId
-        }
-        listByEventName(data).then((res) => {
-          if (res.code === 200) {
-            setTimeout(() => {
-              this.loadingEvent = false
-              this.optionsEventNames = res.rows.filter((item) => {
-                return item.eventName.indexOf(query) > -1
-              })
-            }, 200)
-          }
-        })
-      } else {
-        this.optionsEventNames = []
-      }
     },
     queryFrom(val) {
       this.queryform.pageNo = 1
@@ -297,8 +234,8 @@ export default {
       )
       if (this.radio === '0') {
         this.time = ''
-        this.queryform.startTime = 0
-        this.queryform.endTime = 0
+        this.queryform.startTime = ''
+        this.queryform.endTime = ''
       } else if (this.radio === '1') {
         this.time = ''
         this.queryform.startTime = this.dateToMs(today)
@@ -320,42 +257,73 @@ export default {
       }
       this.RefreshData()
     },
+    reset() {
+      this.queryform.pageNo = 1
+      this.queryform.pageSize = 10
+      this.radio = '0'
+      this.time = ''
+      this.queryform.contentGrades = [] //预警级别
+      this.queryform.emotionTypes = [] //情感类型
+      this.queryform.sourceTypes = []  //数据类型
+      this.queryform.startTime = ''
+      this.queryform.endTime = ''
+      this.queryform.deduplicate = false  //是否去重
+      this.queryform.analysisTimeSort = false  //是否按分析时间排序
+      this.queryform.transmission = this.optionsTransmission //传导关系编码
+      this.RefreshData()
+    },
     RefreshData() {
       this.$emit('RefreshData', this.queryform)
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
 .app {
-  margin-top: 20px;
+  margin-top: 0.03rem;
+  .el-collapse {
+    border-top: 0;
+    border-bottom: 1px dashed #ccc;
+  }
   /deep/ .el-collapse-item__content {
-    padding-bottom: 0;
+    padding-bottom: 0.05rem;
+    background: #f8f8f9;
+  }
+  .el-collapse-item {
+    border-radius: 0.05rem;
+    overflow: hidden;
+  }
+  /deep/.el-collapse-item__wrap {
+    border-bottom: 1px dashed #ccc;
   }
   /deep/ .el-collapse-item__header {
-    background: #ebeef5;
-    font-size: 16px;
-    padding-left: 10px;
-    height: 40px;
+    background: #f8f8f9;
+    font-size: 0.16rem;
+    padding-left: 0.3rem;
+    height: 0.3rem;
     color: #409eff;
+    border-top: 0;
+    border-bottom: 1px dashed #ccc;
   }
   .box_change {
-    padding: 10px 0;
+    padding: 0.05rem 0;
+    margin: 0 0.3rem;
+    // border-bottom: 1px solid #eee;
     .box_text {
       display: inline-block;
-      width: 80px;
+      width: 100px;
+      box-sizing: border-box;
+      padding-left: 0.06rem;
     }
-    .search {
+    .box_btn {
       text-align: center;
-      font-size: 16px;
-      margin-left: 277px;
     }
   }
   .box_sx {
     display: inline-block;
-    margin-left: 10px;
-    min-width: 500px;
+    margin-left: 0.1rem;
+    min-width: 5rem;
   }
 }
 </style>

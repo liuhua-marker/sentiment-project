@@ -1,49 +1,8 @@
 <template>
-  <div class="app-container box">
+  <div>
     <!-- 搜索查询 -->
-    <div class="app-tabs">
-      <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="机构:">
-          <el-select v-model="queryForm.orgId" clearable placeholder="全部" @change="changeOrg">
-            <el-option
-              v-for="item in optionOrg"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="app-table">
-      <h4>数据源订阅列表</h4>
-      <el-table v-loading="loading" :data="quanWordList" class="app-table-list" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column label="机构名称" prop="orgName" />
-        <el-table-column label="部门名称" prop="deptName" />
-        <el-table-column label="订阅源数量" prop="subSourceSize" />
-        <!-- <el-table-column label="预警队列" prop="warningQueue" /> -->
-        <!-- <el-table-column label="热点队列" prop="topicQueue" /> -->
-        <!-- <el-table-column label="备注" prop="remark" /> -->
-        <el-table-column label="选择" width="300">
-          <template slot-scope="scope">
-            <!-- <el-button type="primary" @click="handleAddOrUpdate(scope.row)">队列配置</el-button> -->
-            <el-button type="success" @click="handledata(scope.row)">订阅数据源</el-button>
-            <el-button type="primary" @click="handleDeploy(scope.row)">配置源数据源</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <el-pagination
-        :current-page="queryForm.pageNo"
-        :page-sizes="[5, 10, 20, 30]"
-        :page-size="queryForm.pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+    <listFilters ref="listFilter" :options="filterOption" @change="changeOrg" />
+    <list-table ref="listTable" :options="tableList" @command="listCommand" />
 
     <!-- 配置源数据源 -->
     <el-dialog
@@ -72,7 +31,8 @@
               v-for="item in dataOptions"
               :key="item.sourceTypeId"
               :label="item.sourceTypeId"
-            >{{ item.typeName }}</el-checkbox>
+              >{{ item.typeName }}</el-checkbox
+            >
           </el-checkbox-group>
         </el-form-item>
       </el-form>
@@ -95,7 +55,7 @@
             v-model="queryData.sourceTypeId"
             clearable
             placeholder="全部"
-            @change="changeData"
+            @change="getPageData"
           >
             <el-option
               v-for="item in optionData"
@@ -106,46 +66,32 @@
           </el-select>
         </el-form-item>
       </el-form>
-      <div v-loading="load1" class="data_box">
-        <h4>数据源列表</h4>
-        <el-table
-          :data="tableData"
-          class="app-table-list"
-          border
-          height="485"
-          @row-click="hangleTable"
-        >
-          <el-table-column label="序号" type="index" width="50" />
-          <el-table-column label="数据源名称" prop="sourceName" />
-          <el-table-column label="数据源类型" prop="sourceTypeName" />
-        </el-table>
-        <!-- 分页 -->
-        <el-pagination
-          :current-page="queryData.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryData.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="totalData"
-          @size-change="handleSizeChangeData"
-          @current-change="handleCurrentChangeData"
+      <div class="data_box">
+        <click-list-table
+          class="data_box_item"
+          ref="clickListTable"
+          :options="tableData"
+          @command="listCommand"
         />
-      </div>
-      <div v-loading="load2" class="data_box">
-        <div v-for="(item,index) in optionData" :key="index">
-          <div v-if="item.sourceIds && item.sourceIds.length > 0">
-            <p class="typeNames">{{ item.typeName }}数据源</p>
-            <div>
-              <el-tag
-                v-for="(source,i) in item.sourceIds"
-                :key="i"
-                closable
-                type="primary"
-                @close="tagClose(index,i)"
-              >{{ source.sourceName }}</el-tag>
+        <el-card v-loading="load2" class="data_box_item">
+          <div v-for="(item, index) in optionData" :key="index">
+            <div v-if="item.sourceIds && item.sourceIds.length > 0">
+              <p class="typeNames">{{ item.typeName }}数据源</p>
+              <div>
+                <el-tag
+                  v-for="(source, i) in item.sourceIds"
+                  :key="i"
+                  closable
+                  type="primary"
+                  @close="tagClose(index, i)"
+                  >{{ source.sourceName }}</el-tag
+                >
+              </div>
             </div>
           </div>
-        </div>
+        </el-card>
       </div>
+
       <span slot="footer" class="dialog-footer">
         <el-button @click="clearDialog">取 消</el-button>
         <el-button type="primary" @click="dataQuanIndexFrom">确 定</el-button>
@@ -161,45 +107,112 @@ import {
   listGroupBySourceType, // 以配置的数据源
   configureDataSource, // 配置数据源
   configuration, // 配置源数据源
-  configurationList // 配置数据源列表
+  configurationList, // 配置数据源列表
 } from '@/api/dataSource/dataSourceSubscribe'
 import { confdatasourcetype } from '@/api/dashboard'
 import { getBusinesss } from '@/api/business'
 import { page } from '@/api/dataSource/collectionSites'
 import { systemDept } from '@/api/analysis/hot_analysis'
-import { deepClone } from '../../../utils'
+import listTable from '@/components/table/listTable'
+import clickListTable from '@/components/table/clickListTable'
+import listFilters from '@/components/filter/listFilters'
+import { parseTime, deepClone } from '@/utils'
 export default {
   name: 'DataSourceSubscribe',
-
+  components: { listFilters, listTable, clickListTable },
   data() {
     return {
-      loading: true,
-      load1: true,
+      filterOption: [
+        {
+          componentsName: 'el-select',
+          label: '机构',
+          paramsName: 'orgId',
+          placeholder: '全部',
+          options: [],
+          // defaultValue:""
+        },
+      ],
+      tableList: {
+        title: '数据源订阅列表',
+        listApi: {
+          serviceFN: confdeptsourcesubscribeconfig, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '机构名称', // 表头名称
+            propName: 'orgName', // 查询返回的字段名
+          },
+          {
+            label: '部门名称',
+            propName: 'deptName',
+          },
+          {
+            label: '订阅源数量', // 表头名称
+            propName: 'subSourceSize', // 查询返回的字段名
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '订阅',
+                commandName: 'handledata',
+                type: 'primary',
+              },
+              {
+                label: '配置',
+                commandName: 'handleDeploy',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+      tableData: {
+        title: '数据源列表',
+        listApi: {
+          serviceFN: page, // 获取表格的查询接口
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '数据源名称', // 表头名称
+            propName: 'sourceName', // 查询返回的字段名
+          },
+          {
+            label: '数据源类型',
+            propName: 'sourceTypeName',
+          },
+        ],
+      },
+
       load2: true,
       // 表单数据
-      quanWordList: [],
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
         orgId: '',
-        deptId: ''
+        deptId: '',
       },
       queryData: {
-        pageNo: 1,
-        pageSize: 10,
-        sourceTypeId: ''
+        sourceTypeId: '',
       },
-      total: 0,
-      totalData: 0,
       deptId: '',
       // 新增数据
       addDialogVisible: false,
       KeyDialogVisible: false,
       addRuleForm: { sourceTypeIds: [] },
-      optionOrg: [],
-      optionDept: [],
       optionData: [],
-      tableData: [],
       dataOptions: [],
       sourceTypeIds: [],
       // 新增验证规则
@@ -207,9 +220,9 @@ export default {
         sourceTypeIds: {
           required: true,
           message: '请选择数据源',
-          trigger: 'change'
-        }
-      }
+          trigger: 'change',
+        },
+      },
     }
   },
   created() {
@@ -218,53 +231,38 @@ export default {
     this.getQuanIndex()
   },
   methods: {
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
+    },
     // 获取页面数据
-    async getQuanIndex() {
-      const data = await confdeptsourcesubscribeconfig(this.queryForm)
-      this.quanWordList = data.rows
-      this.total = data.total
-      this.loading = false
+    getQuanIndex() {
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
+      })
     },
     getTypeList() {
       getBusinesss({}).then((res) => {
-        this.optionOrg = res.rows
+        this.filterOption[0].options = []
+        res.rows.forEach((item) => {
+          let option = { value: item.id, label: item.name }
+          this.filterOption[0].options.push(option)
+        })
       })
     },
     // 选择机构
     changeOrg(v) {
-      this.loading = true
       this.queryForm.pageNo = 1
-      this.queryForm.deptId = ''
-      this.getDept()
+      this.queryForm.orgId = v.orgId
       this.getQuanIndex()
     },
-    getDept() {
-      const orgId = { orgIds: [this.queryForm.orgId] }
-      systemDept(orgId).then((res) => [(this.optionDept = res.rows)])
-    },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getQuanIndex()
-    },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
-      this.getQuanIndex()
-    },
-    // // 队列配置
-    // handleAddOrUpdate(res) {
-    //   this.addDialogVisible = true
-    //   this.addRuleForm = JSON.parse(JSON.stringify(res))
-    // },
     // 配置源数据源
     handleDeploy(val) {
       this.getDataSource(val.deptId)
       this.addRuleForm.deptId = val.deptId
       this.addRuleForm.deptName = val.deptName
       this.addRuleForm.orgName = val.orgName
-
       this.addDialogVisible = true
     },
     addQuanIndexFrom() {
@@ -277,7 +275,7 @@ export default {
         ).then((res) => {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
           this.clearDialog() // 关闭表单
           this.getQuanIndex() // 刷新列表
@@ -294,7 +292,7 @@ export default {
       const data = {
         deptId: '0',
         pageNo: 1,
-        pageSize: 99999
+        pageSize: 99999,
       }
       confdatasourcetype(data).then((res) => {
         this.dataOptions = res.rows
@@ -305,21 +303,9 @@ export default {
         })
       })
     },
-    // 订阅数据源分页
-    handleSizeChangeData(val) {
-      this.load1 = true
-      this.queryData.pageSize = val
-      this.getPageData()
-    },
-    handleCurrentChangeData(val) {
-      this.load1 = true
-      this.queryData.pageNo = val
-      this.getPageData()
-    },
     // 订阅数据源
     async handledata(row) {
       this.KeyDialogVisible = true
-      this.load1 = true
       this.load2 = true
       this.deptId = row.deptId
       await confdatasourcetype({ deptId: 0 }).then((res) => {
@@ -341,13 +327,9 @@ export default {
     },
     // 获取订阅数据源列表
     getPageData() {
-      page(this.queryData).then((res) => {
-        this.tableData = res.rows
-        this.totalData = res.total
-        this.load1 = false
-      })
+      this.$refs['clickListTable'].search(this.queryData)
     },
-    hangleTable(row) {
+    tableSelecteRow(row, rows) {
       this.optionData.forEach((item, index) => {
         if (row.sourceTypeId === item.sourceTypeId) {
           if (item.sourceIds.length === 0) {
@@ -363,16 +345,13 @@ export default {
             } else {
               this.$message({
                 type: 'warning',
-                message: '该标签已配置，请重新选择...'
+                message: '该标签已配置，请重新选择...',
               })
             }
           }
         }
         this.$set(this.optionData, index, item)
       })
-    },
-    changeData(id) {
-      this.getPageData(id)
     },
     tagClose(index, i) {
       this.optionData[index].sourceIds.splice(i, 1)
@@ -389,12 +368,12 @@ export default {
         this.clearDialog()
         this.$message({
           type: 'success',
-          message: '订阅数据源成功'
+          message: '订阅数据源成功',
         })
         this.getQuanIndex()
       })
-    }
-  }
+    },
+  },
 }
 </script>
 
@@ -404,40 +383,24 @@ export default {
     margin-right: 10px;
     margin-bottom: 8px;
   }
-  .app-tabs {
-    margin-top: 20px;
-  }
   .typeNames {
     padding: 8px 0;
     border-bottom: 1px solid #ccc;
   }
-  .el-pagination {
-    width: 100%;
-    overflow: hidden;
-    white-space: normal;
-    word-break: break-all;
-    line-height: 30px;
-    text-align: right;
-  }
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-    .app-table-list {
-      width: 100%;
-      margin: 20px 0;
-    }
-  }
   .data_box {
-    display: inline-block;
-    width: 45%;
-    margin-right: 2%;
-    padding: 10px;
-    border: 2px solid #ccc;
+    display: flex;
     height: 625px;
     vertical-align: middle;
     overflow: auto;
     overflow-x: hidden;
+  }
+  .data_box_item {
+    flex: 12;
+    margin-right: 15px;
+    
+  }
+  .data_box_item:last-child {
+    margin-right: 0;
   }
 }
 </style>

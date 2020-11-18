@@ -40,7 +40,7 @@ export function confeventDelete(ids) {
     data: ids
   })
 }
-// 修改信息
+// 编辑信息
 export function confeventUpdate(data) {
   return request({
     url: `/yuqing-configuration/conf_event/update`,
@@ -64,7 +64,7 @@ export function confeventwordDelete(ids) {
     data: ids
   })
 }
-// 事件词修改信息
+// 事件词编辑信息
 export function confeventwordUpdate(data) {
   return request({
     url: `/yuqing-configuration/conf_event_word/update`,

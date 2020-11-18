@@ -40,7 +40,7 @@ export function confCompanyCombinationSubscribeDelete(ids) {
     data: ids
   })
 }
-// 修改信息
+// 编辑信息
 export function confCompanyCombinationSubscribeUpdate(data) {
   return request({
     url: `/yuqing-configuration/confCompanyCombinationSubscribe/update`,

@@ -1,10 +1,17 @@
 <template>
-  <div class="app-container box">
+  <div class="app-container">
     <!-- 搜索查询 -->
-    <div class="app-tabs">
+    <el-card class="app-tabs">
       <el-form :inline="true" class="demo-form-inline">
-        <el-form-item v-if="userInfo.orgId === '0'" label="机构:" content-width="100">
-          <el-select v-model="queryForm.orgId" @change="changeSystem(queryForm.orgId)">
+        <el-form-item
+          v-if="userInfo.orgId === '0'"
+          label="机构:"
+          content-width="100"
+        >
+          <el-select
+            v-model="queryForm.orgId"
+            @change="systemDept(queryForm.orgId)"
+          >
             <el-option
               v-for="item in optionsSystem"
               :key="item.id"
@@ -14,7 +21,12 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="userInfo.deptId === '0'" label="部门:">
-          <el-select v-model="queryForm.deptId" clearable placeholder="全部" @change="changeDept()">
+          <el-select
+            v-model="queryForm.deptId"
+            clearable
+            placeholder="全部"
+            @change="sourceData(queryForm.deptId)"
+          >
             <el-option
               v-for="item in optionsSystemDept"
               :key="item.id"
@@ -40,7 +52,12 @@
         </el-form-item>
         <el-form-item label="重复信息:" content-width="50">
           <el-select v-model="queryForm.deduplicate" @change="queryQuanIndex">
-            <el-option v-for="(v, k, i) in optionCate" :key="i" :label="k" :value="v" />
+            <el-option
+              v-for="(v, k, i) in optionCate"
+              :key="i"
+              :label="k"
+              :value="v"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -57,46 +74,9 @@
           <el-button type="primary" @click="queryQuanIndex">查询</el-button>
         </el-form-item>
       </el-form>
-    </div>
-    <div class="app-table">
-      <div class="app-head">
-        数据监控表
-        <div class="fr">
-          <el-button type="primary" @click="exportFiles">批量导出</el-button>
-        </div>
-      </div>
+    </el-card>
 
-      <el-table v-loading="loading" :data="quanWordList" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column v-if="userInfo.orgId === '0'" label="机构名称">
-          <template>
-            <span
-              v-for="item in optionsSystem"
-              :key="item.id"
-            >{{ item.id === queryForm.orgId ? item.name: '' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column v-if="userInfo.deptId === '0'" label="部门名称" prop="deptName" />
-        <el-table-column label="数据源类型" prop="sourceTypeName" />
-        <el-table-column label="分发公司数量" prop="distributeCompanyCount" />
-        <el-table-column label="分发数据数量" prop="distributeDataCount" />
-        <el-table-column label="分析公司数量" prop="analysisCompanyCount" />
-        <el-table-column label="分析数据数量" prop="analysisDataCount" />
-        <el-table-column label="时间" prop="timeStr" />
-      </el-table>
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryForm.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryForm.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
+    <list-table ref="listTable" :options="tableData" @command="listCommand" />
   </div>
 </template>
 
@@ -104,51 +84,103 @@
 import {
   // configuration_list,
   distributeRecord,
-  domnLoadFile
+  domnLoadFile,
 } from '@/api/monitor/distribute_monitor'
 import { confdatasourcetype } from '@/api/dashboard'
 import { system, systemDept } from '@/api/analysis/hot_analysis'
 import { DomnLoadFile } from '@/utils/exportFiles'
+import listTable from '@/components/table/listTable'
 
 export default {
   name: 'DistributeMonitor',
+  components: { listTable },
   data() {
     var that = this
     return {
+      tableData: {
+        title: '数据监控表',
+        listBtns: [
+          {
+            label: '导出',
+            commandName: 'exportFiles',
+            type: 'primary',
+          },
+        ],
+        listApi: {
+          serviceFN: distributeRecord, // 获取表格的查询接口
+        },
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '机构名称', // 表头名称
+            propName: 'orgName', // 查询返回的字段名
+            hidden: false,
+          },
+          {
+            label: '部门名称',
+            propName: 'deptName',
+            hidden: false,
+          },
+          {
+            label: '数据源类型',
+            propName: 'sourceTypeName',
+          },
+          {
+            label: '分发公司数量',
+            propName: 'distributeCompanyCount',
+          },
+          {
+            label: '分发数据数量',
+            propName: 'distributeDataCount',
+          },
+          {
+            label: '分析公司数量',
+            propName: 'analysisCompanyCount',
+          },
+          {
+            label: '分析数据数量',
+            propName: 'analysisDataCount',
+          },
+          {
+            label: '时间',
+            propName: 'timeStr',
+          },
+        ],
+      },
+
       pickerOptions: {
         disabledDate: (time) => {
           return that.dealDisabledDate(time)
-        }
+        },
       },
-      loading: true,
       // 表单数据
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
         deptId: '',
         orgId: '',
         sourceTypeCode: '',
         like: false,
         endDate: '',
         startDate: '',
-        deduplicate: false
+        deduplicate: false,
       },
       optionCate: {
         重复: '',
-        不重复: false
+        不重复: false,
       },
-      total: 0,
       time: '',
       solutionForm: {
         deptId: '0',
         pageNo: 1,
-        pageSize: 100
+        pageSize: 100,
       },
       optionsSystem: [],
       optionsSystemDept: [],
       optionsSource: [],
       userInfo: {},
-      quanWordList: []
     }
   },
   created() {
@@ -182,8 +214,9 @@ export default {
         this.queryForm.orgId = this.userInfo.orgId
       }
       // 部门
-      if (this.userInfo.deptId === '0') {
-        this.systemDept(this.queryForm.orgId)
+      if (this.userInfo.orgId === '0') {
+        this.systemDept(this.userInfo.orgId)
+        this.getDistribute()
       } else {
         this.queryForm.deptId = this.userInfo.deptId
         this.getDistribute()
@@ -191,16 +224,12 @@ export default {
       // 数据类型
       if (this.userInfo.deptId !== '0') {
         this.queryForm.deptId = this.userInfo.deptId
-        this.sourceData()
+        this.sourceData(this.userInfo.deptId)
       }
     },
     // 数据类型
-    async sourceData() {
-      if (this.queryForm.deptId === '') {
-        this.solutionForm.deptId = '0'
-      } else {
-        this.solutionForm.deptId = this.queryForm.deptId
-      }
+    async sourceData(deptId) {
+      this.solutionForm.deptId = deptId || '0'
       const ress = await confdatasourcetype(this.solutionForm)
       this.optionsSource = ress.rows
     },
@@ -208,38 +237,22 @@ export default {
       const orgId = { orgIds: [id] }
       systemDept(orgId).then((row) => {
         this.optionsSystemDept = row.rows
-        if (this.optionsSystemDept.length > 0) {
-          this.queryForm.deptId = this.optionsSystemDept[0].id
-        } else {
-          this.queryForm.deptId = ''
-        }
-        this.getDistribute()
-        this.sourceData()
+        this.sourceData(this.queryForm.deptId)
       })
     },
-    changeSystem(val) {
-      this.loading = true
-      this.systemDept(val)
-    },
-    changeDept() {
-      this.loading = true
-      this.getDistribute()
-      this.sourceData()
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
     },
     // 页面数据
     getDistribute() {
-      distributeRecord(this.queryForm).then((res) => {
-        if (res.rows) {
-          this.quanWordList = res.rows
-        }
-        this.total = res.total
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
       })
-      this.loading = false
     },
     // 查询
-    queryQuanIndex() {
-      this.loading = true
-      this.queryForm.pageNo = 1
+    queryQuanIndex(v) {
       if (!!this.time && this.time.length !== 0) {
         this.queryForm.startDate = this.time[0].getDate()
         this.queryForm.endDate = this.time[1].getDate()
@@ -255,43 +268,14 @@ export default {
       const fname = `数据监控文档`
       DomnLoadFile(File, fname)
     },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getDistribute()
-    },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
-      this.getDistribute()
-    }
-  }
+  },
 }
 </script>
 
 <style lang="scss" scoped>
 .app-container {
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-    .el-table {
-      width: 100%;
-      margin: 10px 0;
-    }
-    .app-head {
-      height: 36px;
-      line-height: 36px;
-      font-weight: 700;
-      font-size: 14px;
-    }
-    .app-title {
-      margin: 10px;
-    }
-  }
-  .pagination {
-    text-align: right;
+  .el-form-item {
+    margin-bottom: 0;
   }
 }
 </style>

@@ -25,7 +25,7 @@ export default {
         // console.log('您的浏览器支持 WebSocket!')
         that.ws = new WebSocket(
           'ws://192.168.36.171:8088/yuqing-visualize/ws/public_sentiment'
-          // 'ws://192.168.2.129:11111/yuqing-visualize/ws/public_sentiment'
+          // 'ws://218.77.58.154:8888/api/yuqing-visualize/ws/public_sentiment'
         )
         that.WebSocket.setWs(that.ws)
         // that.ws.onopen = function (evt) {

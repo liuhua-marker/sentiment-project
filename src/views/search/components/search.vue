@@ -1,110 +1,95 @@
 <template>
-  <div class="app-container">
-    <div class="search_bg">
-      <div class="search_box">
-        <div class="search_btns">
-          <el-button
-            v-for="(item,index) in btn"
-            :key="index"
-            :type="item.type"
-            @click="tabBtn(item.name)"
-          >{{ item.name }}</el-button>
-        </div>
-        <div class="search_pt">
-          <el-autocomplete
-            v-model="companyName"
-            :fetch-suggestions="querySearchAsync"
-            placeholder="请输入内容"
-            value-key="companyName"
-            class="search_inpt"
-            @select="search"
-            @keyup.enter.native="search"
-          >
-            <template slot-scope="{item}">
-              <div class="compare-name" v-html="item.companyName" />
-            </template>
-            <el-button slot="append" class="search_btn" @click="search">搜索</el-button>
-          </el-autocomplete>
-        </div>
-      </div>
+  <div class="search_bg">
+    <div class="search_box">
+      <el-autocomplete
+        v-model="companyName"
+        :fetch-suggestions="querySearchAsync"
+        placeholder="请输入关键字"
+        value-key="companyName"
+        @select="searchSelect"
+        class="input-with-select"
+        @keyup.enter.native="search"
+      >
+        <el-select v-model="btnName" slot="prepend" @change="tabBtn">
+          <el-option v-for="btn in btns" :key="btn" :label="btn" :value="btn" />
+        </el-select>
+        <template slot-scope="{ item }">
+          <div class="compare-name" v-html="item.companyName" />
+        </template>
+        <el-button slot="append" class="search_btn" @click="search"
+          >搜 索</el-button
+        >
+      </el-autocomplete>
     </div>
   </div>
 </template>
 
 <script>
-import { listByCompanyName } from '@/api/public_sentiment/public_sentiment_page'
-// import { searchByCompany, searchEventByEvent } from '@/api/search/index'
+import {
+  listByCompanyName,
+  getAllLabelsByLikeLabel,
+} from '@/api/public_sentiment/public_sentiment_page'
 export default {
   name: 'Search',
   props: {
     name: {
       type: String,
-      default: ''
+      default: '',
     },
     btnnames: {
       type: String,
-      default: ''
-    }
+      default: '',
+    },
+    btns: {
+      type: Array,
+      default: function () {
+        return ['全部', '公司', '标签']
+      },
+    },
   },
   data() {
     return {
-      btnName: this.btnnames,
-      btn: [
-        {
-          type: 'primary',
-          name: '公司'
-        },
-        // {
-        //   type: 'info',
-        //   name: '资讯',
-        // },
-        {
-          type: 'info',
-          name: '事件'
-        }
-      ],
-      companyName: this.name,
+      btnName: '全部',
+      companyName: '',
       restaurants: [],
       loadingEvent: false,
-      timer: null
+      timer: null,
+      listItem: {},
     }
   },
   watch: {
-    name: function(e) {
-      this.companyName = this.name
+    name: function (e) {
+      this.companyName = e
     },
-    btnnames: function(e) {
-      this.btnName = this.btnnames
-    }
+    btnnames: function (e) {
+      this.btnName = e
+    },
   },
-  created() {
-    this.tabBtn(this.btnName)
-  },
+  created() {},
   methods: {
+    getName() {
+      return {
+        companyName: this.companyName,
+        listItem: this.listItem,
+        btnName: this.btnName,
+      }
+    },
     tabBtn(name) {
-      this.btn.forEach((it, i) => {
-        if (it.name === name) {
-          it.type = 'primary'
-          this.btnName = name
-          this.$emit('tabBtn', this.companyName, this.btnName)
-        } else {
-          it.type = 'info'
-        }
-      })
+      this.companyName = ''
     },
     querySearchAsync(val, cb) {
       const queryString = val.trim()
-      if (queryString.trim().length > 1) {
-        if (this.btnName === '资讯') {
-          this.$message('功能暂未开放')
-        } else {
-          if (this.timer) {
-            clearTimeout(this.timer)
-          }
-          this.timer = setTimeout(() => {
-            this.getCompanyName(queryString, cb)
-          }, 100)
+      if (this.btnName !== '全部' && queryString.trim().length > 1) {
+        if (this.timer) {
+          clearTimeout(this.timer)
         }
+        this.timer = setTimeout(() => {
+          if (this.btnName === '公司') {
+            this.getCompanyName(queryString, cb)
+          } else if (this.btnName === '标签') {
+            this.getlabelName(queryString, cb)
+          }
+        }, 100)
       } else {
         this.restaurants = []
         cb(this.restaurants)
@@ -116,11 +101,14 @@ export default {
       const data = {
         companyName: name,
         pageNo: 1,
-        pageSize: 5
+        pageSize: 5,
       }
       listByCompanyName(data).then((res) => {
         this.restaurants = res.rows
-        const reg = new RegExp(name, 'g')
+        const pattern = /[`~!@#$^&*()=|{}':;',\\\[\]\.<>\/?~！@#￥……&*（）——|{}【】'；：""'。，、？\s]/
+        const R = name.replace(pattern, '')
+        const reg = new RegExp(R, 'g')
+        // console.log(reg);
         this.restaurants.forEach((item) => {
           item.companyName = item.companyName.replace(
             reg,
@@ -131,68 +119,103 @@ export default {
         cb(this.restaurants)
       })
     },
-    search() {
+    getlabelName(name, cb) {
+      this.loadingEvent = true
+      this.restaurants = []
+      getAllLabelsByLikeLabel(name).then((res) => {
+        this.restaurants = []
+        const reg = new RegExp(name, 'g')
+        res.data.forEach((item) => {
+          item.labelName = item.labelName.replace(
+            reg,
+            `<span style="color: #ff4949">${name}</span>`
+          )
+          this.restaurants.push({
+            companyName: item.labelName,
+            level: item.level,
+          })
+        })
+        this.loadingEvent = false
+        cb(this.restaurants)
+      })
+    },
+    searchSelect(e) {
       this.companyName = this.companyName.replace(/<[^>]*>/g, '').trim()
+      e.companyName = e.companyName.replace(/<[^>]*>/g, '').trim()
+      this.listItem = e
+    },
+    search() {
       if (this.companyName.length > 0) {
-        this.$emit('search_company', this.companyName, this.btnName)
+        this.$router.push({
+          query: {
+            companyName: this.companyName,
+            btnName: this.btnName,
+            level: this.listItem.level,
+          },
+        })
+        this.$emit('search', this.companyName, this.btnName, this.listItem)
       } else {
         this.$message('搜索内容不能为空！')
         return
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  padding: 0 !important;
-  .search_bg {
-    position: relative;
-    width: 100%;
-    height: 120px;
-    box-sizing: border-box;
-    background: #ebeef5;
-  }
-  .search_box {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    .el-button {
-      border-radius: 0;
-    }
-    .search_btns {
-      margin-left: 1px;
-    }
-  }
-  .search_pt {
-    width: 655px;
-    .search_inpt {
-      width: 100%;
-      height: 48px;
-    }
-    .search_btn {
-      width: 100px;
-      text-align: center;
-      font-size: 18px;
-    }
-  }
-
-  /deep/.el-input__inner {
-    height: 48px !important;
-    line-height: 48px !important;
-    border-radius: 0;
-    border: 1px solid #fff;
-  }
-  /deep/ .el-input-group__append {
-    background-color: #1890ff !important;
-    color: #fff !important;
-    border: 1px solid #1890ff;
+.search_bg {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  box-sizing: border-box;
+  border-radius: 5px;
+}
+.search_box {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  // background: #3b99fb;
+  .search_btn {
+    width: 108px;
     text-align: center;
+    font-size: 18px;
   }
-  /deep/ .el-input-group__append:hover {
-    background-color: #409eff !important;
-  }
+}
+.el-select {
+  width: 108px;
+  background: #fff;
+  border-right: 0;
+  height: 44px;
+  border-radius: 5px 0 0 5px;
+  color: #333;
+}
+.el-autocomplete {
+  width: 740px;
+  border: 1px solid #3b99fb;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #3b99fb;
+}
+/deep/.el-input__inner {
+  height: 44px !important;
+  line-height: 44px !important;
+  border-radius: 0;
+  border: 0;
+  border-left: 1px solid #3b99fb;
+}
+/deep/ .el-input-group__append {
+  background-color: #3b99fb !important;
+  color: #fff !important;
+  border: 0;
+  text-align: center;
+  font-size: 18px;
+}
+/deep/ .el-input-group__append:hover {
+  background-color: #409eff !important;
+}
+/deep/.el-input__icon {
+  line-height: 44px;
 }
 </style>

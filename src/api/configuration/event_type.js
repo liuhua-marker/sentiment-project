@@ -33,7 +33,7 @@ export function eventTypeDelete(ids) {
   })
 }
 
-// 修改信息
+// 编辑信息
 export function eventTypeUpdate(data) {
   return request({
     url: `/yuqing-configuration/conf_event_type/update`,

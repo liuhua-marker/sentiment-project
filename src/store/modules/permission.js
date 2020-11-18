@@ -36,7 +36,7 @@ export function filterAsyncRoutes(menuTree, name, parentMenuCategory) {
     }
     const routerObj = {
       path: mEl.menuUrl || mEl.menuName,
-      component: () => import(`@/views${mEl.menuUrl}`),
+      component: (resolve) => require([`@/views${mEl.menuUrl}`],resolve),
       name: mEl.menuName || mEl.menuUrl,
       meta: {
         title: mEl.menuName,

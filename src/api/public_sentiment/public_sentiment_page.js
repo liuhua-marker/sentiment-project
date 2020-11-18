@@ -1,9 +1,16 @@
 import request from '@/utils/request'
 
-// 获取列表信息
+// 获取舆情列表信息
 export function yqSearchInfo(id) {
   return request({
     url: `/yuqing-visualize/yqSearch/info/${id}`,
+    method: 'POST'
+  })
+}
+// 获取标签标注列表信息
+export function labelInfo(id) {
+  return request({
+    url: `/yuqing-visualize/yqSearch/labelInfo/${id}`,
     method: 'POST'
   })
 }
@@ -14,7 +21,13 @@ export function findTargetCombinationWarning(data) {
     data
   })
 }
-
+// 获取三级标签
+export function getThreeLevelLabels() {
+  return request({
+    url: `/yuqing-configuration/conf_event/getThreeLevelLabels`,
+    method: 'get',
+  })
+}
 // 模糊匹配公司
 export function listByCompanyName(data) {
   return request({
@@ -23,14 +36,13 @@ export function listByCompanyName(data) {
     data
   })
 }
-// // 模糊匹配公司
-// export function listByCompanyName(data) {
-//   return request({
-//     url: `/yuqing-configuration/confcompany/listByAbbAndCompanyName`,
-//     method: 'POST',
-//     data
-//   })
-// }
+// 模糊三级标签
+export function getAllLabelsByLikeLabel(keyword) {
+  return request({
+    url: `/yuqing-configuration/conf_event/getAllLabelsByLikeLabel/${keyword}`,
+    method: 'get',
+  })
+}
 // 模糊匹配事件
 export function listByEventName(data) {
   return request({

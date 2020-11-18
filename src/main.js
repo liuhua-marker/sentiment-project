@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import './utils/rem'
+
 
 import Cookies from 'js-cookie'
 
@@ -39,6 +39,7 @@ import 'vue-draggable-resizable/dist/VueDraggableResizable.css'
 Vue.component('vue-draggable-resizable', VueDraggableResizable)
 
 import VueDraggableResizableGorkys from 'vue-draggable-resizable-gorkys'
+import './utils/rem'
 
 // optionally import default styles
 

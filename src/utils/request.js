@@ -61,6 +61,14 @@ service.interceptors.response.use(
         return
       } else if (res.code === 50009) {
         return res
+      } else if (res.code === 50002) {
+        Message({
+          message: res.msg || 'Error',
+          type: 'error',
+          showClose: true,
+          duration: 5 * 1000
+        })
+        return res
       } else if (res.code === 40001 || res.msg === '用户不存在或账户密码错误!') {
         Message({
           message: res.msg,

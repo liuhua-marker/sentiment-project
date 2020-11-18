@@ -1,78 +1,20 @@
 <template>
-  <div class="app-container">
+  <div>
     <!-- 搜索查询 -->
-    <div class="app-tabs">
-      <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="关键词查询:">
-          <el-input
-            v-model.trim="queryForm.subName"
-            placeholder="订阅名"
-            size="medium"
-            @keyup.enter.native="queryQuanIndex"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="queryQuanIndex">查询</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="app-table">
-      <div class="app-head">
-        目标监控列表
-        <div class="fr">
-          <el-button type="primary" @click="addEventFrom">新增</el-button>
-        </div>
-      </div>
-      <el-table v-loading="loading" :data="quanWordList" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column label="订阅名" prop="subName" />
-        <el-table-column label="新增时间" prop="createTime" />
-        <el-table-column label="选择" width="240">
-          <template slot-scope="scope">
-            <el-button
-              type="success"
-              size="small"
-              @click="handleAddOrUpdate(scope.row)"
-            >详情</el-button>
-            <el-button
-              type="primary"
-              size="small"
-              @click="handleUpdate(scope.row)"
-            >修改</el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="handleDelete([scope.row.companyCombSubId])"
-            >删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryForm.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryForm.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
-    <!-- 新增与修改订阅公司 -->
+    <listFilters ref="listFilter" :options="filterOption" @change="queryQuanIndex" />
+    <list-table ref="listTable" :options="tableData" @command="listCommand" />
+    <!-- 新增与编辑订阅公司 -->
     <el-dialog
       :close-on-click-modal="false"
       :title="title"
       :visible.sync="addDialogVisible"
-      width="50%"
-      :before-close="clearDialog"
+      width="30%"
     >
       <el-form
         ref="eventFrom"
         :model="eventFrom"
         :rules="eventRules"
-        label-width="150px"
+        label-width="100px"
         class="demo-ruleForm"
       >
         <el-form-item label="订阅名称:" prop="subName">
@@ -91,67 +33,22 @@
     <!-- 订阅公司的对话框 -->
     <el-dialog
       :close-on-click-modal="false"
-      title="订阅公司"
-      :visible.sync="dialogVisible"
+      :visible.sync="dialogTable"
       width="75%"
-      :before-close="clearDialog"
     >
-      <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="关键词查询:">
-          <el-input
-            v-model.trim="queryLable.companyName"
-            placeholder="公司名"
-            size="medium"
-            @keyup.enter.native="seaschcompanyName"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="seaschcompanyName">查询</el-button>
-          <el-button type="primary" @click="addcompanyName">新增</el-button>
-          <el-button
-            type="primary"
-            @click="ImportCompanyNameFiles"
-          >导入</el-button>
-          <el-button
-            type="primary"
-            @click="ImportCompanyNameModle"
-          >模板下载</el-button>
-        </el-form-item>
-      </el-form>
-      <el-table v-loading="load1" :data="ruleForm" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column label="公司名" prop="companyName" />
-        <el-table-column label="新增时间" prop="createTime" />
-        <el-table-column label="备注" prop="remark" />
-        <el-table-column label="选择" width="240">
-          <template slot-scope="scope">
-            <el-button
-              type="danger"
-              size="small"
-              @click="handleDelete([scope.row.companyCombSubRelId])"
-            >删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryLable.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryLable.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="totalLable"
-          @size-change="handleSizeChangelable"
-          @current-change="handleCurrentChangeLable"
-        />
-      </div>
+      <listFilters ref="companyFilter" :options="companyOption" @change="seaschcompanyName" />
+      <list-table
+        ref="companyTable"
+        :options="companyTable"
+        @command="listCommand"
+      />
     </el-dialog>
-    <!-- 新增与修改公司名 -->
+    <!-- 新增与编辑公司名 -->
     <el-dialog
       :close-on-click-modal="false"
       :title="companyNameTitle"
       :visible.sync="addWordDialogVisible"
-      width="50%"
+      width="30%"
     >
       <el-form
         ref="companyNameFrom"
@@ -160,9 +57,7 @@
         label-width="100px"
         class="demo-ruleForm"
       >
-        <el-form-item label="公司名:">
-          <!-- <el-input v-model.trim="companyNameFrom.companyName" placeholder="公司名" size="medium" /> -->
-          <!-- <Autocomplete :targetcompany="companyName" @RefreshData="RefreshData"/> -->
+        <el-form-item label="公司名">
           <el-autocomplete
             ref="autoComplete"
             v-model="companyName"
@@ -203,67 +98,173 @@ import {
   confcompanyNameSave,
   confcompanyNameDelete,
   // confcompanyNameUpdate,
-  companyNameDomnLoadModel
+  companyNameDomnLoadModel,
 } from '@/api/enterprise/enterpriseTotal'
 import { DomnLoadFile } from '@/utils/exportFiles'
 import ImportantFlies from '@/components/Upload/ImportantFlies'
 import { companyModelUpload } from '@/utils/url'
 // import Autocomplete from '@/views/components/autocomplete'
 import { listByCompanyName } from '@/api/public_sentiment/public_sentiment_page'
-
+import listTable from '@/components/table/listTable'
+import listFilters from '@/components/filter/listFilters'
 export default {
   name: 'EnterpriseTotal',
-  components: { ImportantFlies },
+  components: { ImportantFlies, listFilters, listTable },
 
   data() {
     return {
+      filterOption: [
+        {
+          componentsName: 'el-input',
+          label: '关键词查询',
+          paramsName: 'subName',
+          placeholder: '订阅名',
+        },
+      ],
+      tableData: {
+        title: '目标监控列表',
+        listBtns: [
+          {
+            label: '新增',
+            commandName: 'addEventFrom',
+            type: 'primary',
+          },
+        ],
+        listApi: {
+          serviceFN: confCompanyCombinationSubscribe, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '订阅名', // 表头名称
+            propName: 'subName', // 查询返回的字段名
+          },
+          {
+            label: '编辑时间',
+            propName: 'createTime',
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '详情',
+                commandName: 'handleAddOrUpdate',
+                type: 'primary',
+              },
+              {
+                label: '编辑',
+                commandName: 'handleUpdate',
+                type: 'primary',
+              },
+              {
+                label: '删除',
+                commandName: 'handleDelete',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+      companyOption: [
+        {
+          componentsName: 'el-input',
+          label: '关键词查询',
+          paramsName: 'companyName',
+          placeholder: '公司名',
+        },
+      ],
+      companyTable: {
+        title: '订阅公司名',
+        listBtns: [
+          {
+            label: '新增',
+            commandName: 'addcompanyName',
+            type: 'primary',
+          },
+          {
+            label: '导入',
+            commandName: 'ImportCompanyNameFiles',
+          },
+          {
+            label: '模板',
+            commandName: 'ImportCompanyNameModle',
+          },
+        ],
+        listApi: {
+          serviceFN: confcompanyNameList, // 获取表格的查询接口
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '公司名', // 表头名称
+            propName: 'companyName', // 查询返回的字段名
+          },
+          {
+            label: '新增时间',
+            propName: 'createTime',
+          },
+          {
+            label: '备注',
+            propName: 'remark',
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '删除',
+                commandName: 'handleDelete',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+
       // 表单数据
-      loading: true,
-      load1: true,
-      quanWordList: [],
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
-        subName: ''
+        subName: '',
       },
       queryLable: {
         companyCombSubId: '',
         companyName: '',
-        pageNo: 1,
-        pageSize: 10
       },
-      totalLable: 0,
       eventFrom: {},
-      total: 0,
       title: '新增',
       companyNameTitle: '新增公司名',
-      // 修改
-      dialogVisible: false,
+      // 编辑
+      dialogTable: false,
       addDialogVisible: false,
       addWordDialogVisible: false,
-      ruleForm: [],
       companyName: '',
       loadingEvent: false,
       restaurants: [],
       timer: null,
       companyNameFrom: {
         companyCombSubId: '',
-        companyName: ''
+        companyName: '',
       },
       eventRules: {
         subName: {
           required: true,
           message: '请输入订阅公司名称',
-          trigger: 'blur'
+          trigger: 'blur',
         },
-        companyName: {
-          required: true,
-          message: '请输入公司名',
-          trigger: 'blur'
-        }
       },
       action: '', // 导入
-      DialogVisible: false
+      DialogVisible: false,
     }
   },
   created() {
@@ -291,7 +292,7 @@ export default {
       const data = {
         companyName: name,
         pageNo: 1,
-        pageSize: 5
+        pageSize: 5,
       }
       listByCompanyName(data).then((res) => {
         this.restaurants = res.rows
@@ -310,30 +311,23 @@ export default {
       this.$refs['autoComplete'].suggestions = []
       this.companyName = this.companyName.replace(/<[^>]*>/g, '').trim()
     },
-    async getQuanIndex() {
-      const data = await confCompanyCombinationSubscribe(this.queryForm)
-      this.quanWordList = data.rows
-      this.total = data.total
-      this.loading = false
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
+    },
+    // 获取页面数据
+    getQuanIndex() {
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
+      })
     },
     // 查询
     queryQuanIndex(v) {
-      this.loading = true
-      this.queryForm.pageNo = 1
+      this.queryForm.subName = v.subName
       this.getQuanIndex()
     },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getQuanIndex()
-    },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
-      this.getQuanIndex()
-    },
-    // 根据id新增修改数据
+    // 根据id新增编辑数据
     addEventFrom() {
       this.addDialogVisible = true
       this.title = '新增'
@@ -341,61 +335,45 @@ export default {
     },
     handleUpdate(row) {
       this.addDialogVisible = true
-      this.title = '修改'
+      this.title = '编辑'
       this.eventFrom = JSON.parse(JSON.stringify(row))
     },
     handleAddFrom() {
-      this.$refs.eventFrom.validate(async(valid) => {
+      this.$refs.eventFrom.validate(async (valid) => {
         if (!valid) return
         var confevent = null
         if (this.title === '新增') {
           confevent = confCompanyCombinationSubscribeSave(this.eventFrom)
         }
-        if (this.title === '修改') {
+        if (this.title === '编辑') {
           confevent = confCompanyCombinationSubscribeUpdate(this.eventFrom)
         }
         confevent.then((res) => {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
-          this.getQuanIndex()
-          this.clearDialog()
+          this.$refs.listFilter.filterParams.subName = ''
+          this.addDialogVisible = false
+          this.queryQuanIndex(this.$refs.listFilter.filterParams)
         })
       })
     },
-    // 详情
+    // 详情订阅公司
     handleAddOrUpdate(res) {
-      this.load1 = true
-      this.ruleForm = []
-      this.queryLable.pageNo = 1
       this.queryLable.companyCombSubId = res.companyCombSubId
       this.companyNameFrom.companyCombSubId = res.companyCombSubId
+      this.dialogTable = true
       this.getEventLableDetail()
-      this.dialogVisible = true
     },
-    seaschcompanyName() {
-      this.load1 = true
-      this.queryLable.pageNo = 1
+    seaschcompanyName(v) {
+      this.queryLable.companyName = v.companyName
       this.getEventLableDetail()
     },
     getEventLableDetail() {
-      confcompanyNameList(this.queryLable).then((res) => {
-        this.ruleForm = res.rows
-        this.totalLable = res.total
-        this.load1 = false
+      this.$nextTick(() => {
+        this.$refs['companyTable'].search(this.queryLable)
       })
-    },
-    // 详情分页
-    handleSizeChangelable(val) {
-      this.load1 = true
-      this.queryLable.pageSize = val
-      this.getEventLableDetail()
-    },
-    handleCurrentChangeLable(val) {
-      this.load1 = true
-      this.queryLable.pageNo = val
-      this.getEventLableDetail()
     },
     // 新增公司名
     addcompanyName() {
@@ -407,7 +385,6 @@ export default {
     },
     addcompanyNameFrom() {
       if (this.companyName.trim().length > 1) {
-        this.load1 = true
         var confcompanyName = null
         if (this.companyNameTitle === '新增公司名') {
           this.companyNameFrom.companyName = this.companyName
@@ -416,42 +393,40 @@ export default {
         confcompanyName.then((res) => {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
-          this.getEventLableDetail()
+          this.$refs.listFilter.filterParams.companyName = ''
           this.addWordDialogVisible = false
+          this.seaschcompanyName(this.$refs.listFilter.filterParams)
         })
       } else {
         this.$message('公司名称错误，请重新填写')
       }
     },
-    clearDialog() {
-      // 刷新列表
-      this.dialogVisible = false
-      this.addDialogVisible = false
-    },
     // 根据id删除数据
     handleDelete(ids) {
+      let id = []
       this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
       })
         .then(() => {
-          this.load1 = true
-          if (this.dialogVisible) {
-            confcompanyNameDelete(ids).then((res) => {
+          if (this.dialogTable) {
+            id.push(ids.companyCombSubRelId)
+            confcompanyNameDelete(id).then((res) => {
               this.$message({
                 type: 'success',
-                message: '删除成功!'
+                message: '删除成功!',
               })
               this.getEventLableDetail()
             })
           } else {
-            confCompanyCombinationSubscribeDelete(ids).then((res) => {
+            id.push(ids.companyCombSubId)
+            confCompanyCombinationSubscribeDelete(id).then((res) => {
               this.$message({
                 type: 'success',
-                message: '删除成功!'
+                message: '删除成功!',
               })
               this.getQuanIndex()
             })
@@ -460,7 +435,7 @@ export default {
         .catch(() => {
           this.$message({
             type: 'info',
-            message: '已取消删除'
+            message: '已取消删除',
           })
         })
     },
@@ -478,37 +453,16 @@ export default {
     handleClose() {
       this.DialogVisible = false
       this.getEventLableDetail()
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  background: #fff;
-  .app-head {
-    height: 36px;
-    line-height: 36px;
-    font-weight: 700;
-    font-size: 14px;
-  }
-  .app-tabs {
-    margin-top: 20px;
-  }
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-  }
-  .el-table {
-    width: 100%;
-    margin: 10px 0;
-  }
-  .pagination {
-    text-align: right;
-  }
-  .search_inpt {
-    width: 564px;
-  }
+/deep/.el-dialog__body {
+  padding: 10px 15px;
+}
+.el-autocomplete {
+  width: 100%;
 }
 </style>

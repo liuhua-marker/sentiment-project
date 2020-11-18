@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container content_box">
     <div class="app-filters">
       <el-form :inline="true" class="serach-form-inline">
         <el-form-item label="公司名称">
@@ -468,7 +468,7 @@ export default {
 </script>
 
 <style lang="scss">
-.app-container {
+.content_box {
   .el-checkbox {
     max-width: 20vw !important;
     min-width: 17vw !important;

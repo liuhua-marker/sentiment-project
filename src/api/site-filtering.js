@@ -16,7 +16,7 @@ export function addQuanIndexFrom(data) {
   })
 }
 
-// 修改
+// 编辑
 export function editeQuanIndexFrom(data) {
   return request({
     url: `/yuqing-configuration/Confsitesourceurlfilter/update`,

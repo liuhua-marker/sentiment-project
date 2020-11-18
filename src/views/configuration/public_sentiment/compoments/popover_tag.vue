@@ -88,7 +88,7 @@ import {
 // import { Message } from 'element-ui'
 // import { request } from '@/utils/request'
 export default {
-  name: 'PopoverTag',
+  name: 'EditTag',
   props: {
     yuqingtag: {
       type: Object,

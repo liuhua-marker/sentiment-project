@@ -32,7 +32,7 @@ export function save(data) {
   })
 }
 
-// 修改信息
+// 编辑信息
 export function editeQuanIndexFrom(data) {
   return request({
     url: `/yuqing-configuration/confconfigitems/update`,

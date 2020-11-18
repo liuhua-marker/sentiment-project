@@ -1,7 +1,7 @@
 <template>
-  <el-card class="box-card card">
-    <el-row :gutter="30" class="panel-group">
-      <el-col v-if="userInfo.orgId === '0'" :xs="6" :sm="4" :lg="4" class="card-panel-col">
+  <el-card class="card">
+    <div class="panel-group">
+      <div v-if="userInfo.orgId === '0'" class="card-pandiv">
         <div class="card-panel" @click="handleSetLineChartData('orgCount')">
           <div class="card-panel-icon-wrapper icon-jigou">
             <svg-icon icon-class="jigou" class-name="card-panel-icon" />
@@ -17,8 +17,8 @@
             <span class="card-panel-unit">(家)</span>
           </div>
         </div>
-      </el-col>
-      <el-col v-if="userInfo.orgId === '0'" :xs="6" :sm="4" :lg="4" class="card-panel-col">
+      </div>
+      <div v-if="userInfo.orgId === '0'" class="card-pandiv">
         <div class="card-panel" @click="handleSetLineChartData('deptCount')">
           <div class="card-panel-icon-wrapper icon-bumen">
             <svg-icon icon-class="bumen" class-name="card-panel-icon" />
@@ -34,8 +34,8 @@
             <span class="card-panel-unit">(家)</span>
           </div>
         </div>
-      </el-col>
-      <el-col :xs="6" :sm="lg" :lg="lg" class="card-panel-col">
+      </div>
+      <div class="card-pandiv">
         <div class="card-panel" @click="handleSetLineChartData('companyCount')">
           <div class="card-panel-icon-wrapper icon-qiye">
             <svg-icon icon-class="qiye" class-name="card-panel-icon" />
@@ -51,9 +51,12 @@
             <span class="card-panel-unit">(家)</span>
           </div>
         </div>
-      </el-col>
-      <el-col :xs="6" :sm="lg" :lg="lg" class="card-panel-col">
-        <div class="card-panel" @click="handleSetLineChartData('negativeEventCount')">
+      </div>
+      <div class="card-pandiv">
+        <div
+          class="card-panel"
+          @click="handleSetLineChartData('negativeEventCount')"
+        >
           <div class="card-panel-icon-wrapper icon-yujing">
             <svg-icon icon-class="yujing" class-name="card-panel-icon" />
           </div>
@@ -68,9 +71,12 @@
             <span class="card-panel-unit">(条)</span>
           </div>
         </div>
-      </el-col>
-      <el-col :xs="6" :sm="lg" :lg="lg" class="card-panel-col">
-        <div class="card-panel" @click="handleSetLineChartData('negativeCompanyCount')">
+      </div>
+      <div class="card-pandiv">
+        <div
+          class="card-panel"
+          @click="handleSetLineChartData('negativeCompanyCount')"
+        >
           <div class="card-panel-icon-wrapper icon-jinggao">
             <svg-icon icon-class="jinggao" class-name="card-panel-icon" />
           </div>
@@ -85,8 +91,8 @@
             <span class="card-panel-unit">(家)</span>
           </div>
         </div>
-      </el-col>
-      <el-col v-if="userInfo.orgId !== '0'" :xs="6" :sm="lg" :lg="lg" class="card-panel-col">
+      </div>
+      <div v-if="userInfo.orgId !== '0'" class="card-pandiv">
         <div class="card-panel" @click="handleSetLineChartData('dataCount')">
           <div class="card-panel-icon-wrapper icon-shuju">
             <svg-icon icon-class="shuju" class-name="card-panel-icon" />
@@ -102,8 +108,8 @@
             <span class="card-panel-unit">(条)</span>
           </div>
         </div>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
   </el-card>
 </template>
 
@@ -115,13 +121,13 @@ export default {
   props: {
     homepage: {
       type: Object,
-      default: function() {
+      default: function () {
         return {
           deptId: '',
-          orgId: ''
+          orgId: '',
         }
-      }
-    }
+      },
+    },
   },
   data() {
     return {
@@ -133,9 +139,9 @@ export default {
         companyCount: 0,
         negativeEventCount: 0,
         negativeCompanyCount: 0,
-        dataCount: 0
+        dataCount: 0,
       },
-      userInfo: {}
+      userInfo: {},
     }
   },
   watch: {
@@ -146,7 +152,7 @@ export default {
     },
     homePage() {
       return (this.homePageIndex = this.homepage)
-    }
+    },
   },
 
   created() {
@@ -180,57 +186,40 @@ export default {
         const res = await homePageIndex(page)
         this.homePageFrom = res.data
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
+.el-card__body {
+  padding: 0.1rem;
+}
 .panel-group {
-  .card-panel-col {
+  display: flex;
+  justify-content: space-between;
+  .card-pandiv {
+    flex: 5;
     text-align: center;
+    margin-left: 0.1rem;
+  }
+  .card-pandiv:first-child {
+    margin-left: 0;
   }
   .card-panel {
-    height: 0.54rem;
+    display: flex;
+    justify-content: space-between;
+    height: 0.8rem;
     // cursor: pointer;  // 鼠标经过变小手
     font-size: 0.06rem;
     position: relative;
     overflow: hidden;
     color: #666;
     background: #fff;
-    border-radius: 20px;
+    border-radius: 0.05rem;
     box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.1);
     border-color: rgba(0, 0, 0, 0.1);
-
-    // &:hover {
-    //   .card-panel-icon-wrapper {
-    //     background: #fff;
-    //   }
-    //   .icon-jigou {
-    //     color: #1fdf6f;
-    //   }
-
-    //   .icon-bumen {
-    //     color: #36a3f7;
-    //   }
-
-    //   .icon-qiye {
-    //     color: #fc8906;
-    //   }
-
-    //   .icon-yujing {
-    //     color: #06eeff;
-    //   }
-    //   .icon-jinggao {
-    //     color: #fc2744;
-    //   }
-    //   .icon-shuju {
-    //     color: #05c078;
-    //   }
-    // }
-    .card-panel-icon-wrapper {
-      color: #fff;
-    }
+    padding: 0.07rem;
     .icon-jigou {
       background: #1fdf6f;
     }
@@ -254,27 +243,23 @@ export default {
     }
 
     .card-panel-icon-wrapper {
-      float: left;
-      margin: 0.07rem 0 0 0.07rem;
+      color: #fff;
       padding: 0.08rem;
       transition: all 0.38s ease-out;
       border-radius: 6px;
     }
 
     .card-panel-icon {
-      float: left;
-      font-size: 0.24rem;
+      font-size: 0.5rem;
     }
 
     .card-panel-description {
-      float: right;
+      width: 100%;
       font-weight: bold;
-      margin: 0.13rem;
-      margin-left: 0px;
+      margin: 0.13rem 0;
       .card-panel-text {
-        line-height: 0.09rem;
         color: rgba(0, 0, 0, 0.45);
-        font-size: 0.08rem;
+        font-size: 0.2rem;
         margin-bottom: 0.06rem;
       }
       .card-panel-unit {
@@ -282,7 +267,7 @@ export default {
         font-weight: 400;
       }
       .card-panel-num {
-        font-size: 0.1rem;
+        font-size: 0.16rem;
       }
     }
   }

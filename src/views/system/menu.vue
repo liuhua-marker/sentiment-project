@@ -8,10 +8,10 @@
         <el-table-column label="菜单编码" prop="menuCode" />
         <el-table-column label="菜单模块" prop="menuModule" />
         <el-table-column label="菜单地址" prop="menuUrl" />
-        <el-table-column label="菜单类型">
+        <el-table-column label="菜单类型" width="100">
           <template slot-scope="scope">{{ menuCategorys[scope.row.menuCategory] }}</template>
         </el-table-column>
-        <el-table-column label="菜单排序" prop="orderBy" />
+        <el-table-column label="菜单排序" prop="orderBy" width="100"/>
         <el-table-column label="状态">
           <template slot-scope="scope">
             <el-switch
@@ -26,7 +26,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320">
+        <el-table-column label="操作" width="250">
           <template slot-scope="scope">
             <el-button
               v-if="scope.row.menuCategory != 'button'"

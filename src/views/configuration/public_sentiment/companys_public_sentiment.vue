@@ -1,10 +1,17 @@
 <template>
-  <div class="app-container box">
+  <div class="app-container">
     <!-- 搜索查询 -->
-    <div class="app-tabs">
+    <el-card>
       <el-form :inline="true" class="demo-form-inline">
-        <el-form-item v-if="userInfo.orgId === '0'" label="机构:" content-width="100">
-          <el-select v-model="queryForm.orgId" @change="changeSystem(queryForm.orgId)">
+        <el-form-item
+          v-if="userInfo.orgId === '0'"
+          label="机构"
+          content-width="100"
+        >
+          <el-select
+            v-model="queryForm.orgId"
+            @change="changeSystem(queryForm.orgId)"
+          >
             <el-option
               v-for="item in optionsSystem"
               :key="item.id"
@@ -13,7 +20,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="userInfo.deptId === '0'" label="部门:">
+        <el-form-item v-if="userInfo.deptId === '0'" label="部门">
           <el-select
             v-model="queryForm.deptId"
             clearable
@@ -28,22 +35,39 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="公司:">
-          <Autocomplete :targetcompany="queryForm.targetCompany" @RefreshData="RefreshData" />
+        <el-form-item label="公司">
+          <Autocomplete
+            :targetcompany="queryForm.targetCompany"
+            @RefreshData="RefreshData"
+          />
         </el-form-item>
       </el-form>
       <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="重复:" content-width="50">
+        <el-form-item label="重复" content-width="50">
           <el-select v-model="queryForm.deduplicate" @change="queryQuanIndex">
-            <el-option v-for="(v, k, i) in optionCate" :key="i" :label="k" :value="v" />
+            <el-option
+              v-for="(v, k, i) in optionCate"
+              :key="i"
+              :label="k"
+              :value="v"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="极性:">
-          <el-select v-model="queryForm.emotionType" clearable @change="queryQuanIndex">
-            <el-option v-for="(v, k, i) in optionEmotionType" :key="i" :label="k" :value="v" />
+        <el-form-item label="情感类型">
+          <el-select
+            v-model="queryForm.emotionType"
+            clearable
+            @change="queryQuanIndex"
+          >
+            <el-option
+              v-for="(v, k, i) in optionEmotionType"
+              :key="i"
+              :label="k"
+              :value="v"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="时间:">
+        <el-form-item label="时间">
           <el-date-picker
             v-model="time"
             type="daterange"
@@ -55,62 +79,80 @@
           />
         </el-form-item>
       </el-form>
-    </div>
-    <el-card class="box-card" shadow="never">
-      <h4 style="margin-top: 0">公司舆情预警表</h4>
-      <CompanyTable :load="loading" :tablefrom="quanWordList" />
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryForm.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryForm.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
     </el-card>
-    <!-- <el-tabs v-model="activeName" type="border-card" @tab-click="queryQuanIndex">
-      <el-tab-pane label="最新舆情" name="1">
-        <CompanyTable :load="loading" :tablefrom="quanWordList" />
-      </el-tab-pane>
-      <el-tab-pane label="舆情数量" name="2">
-        <CompanyTable :load="loading" :tablefrom="quanWordList" />
-      </el-tab-pane>
-      <el-tab-pane v-if="userInfo.deptId !== '0'" label="目标监控组合" name="3">
-        <CompanyTable :load="loading" :tablefrom="quanWordList" />
-      </el-tab-pane>
-      <el-tab-pane v-if="isShow" label="公司检索" name="4">
-        <CompanyTable :load="loading" :tablefrom="quanWordList" />
-      </el-tab-pane>
-    </el-tabs>-->
-    <!-- 分页 -->
+    <list-table ref="listTable" :options="tableData" @command="listCommand" />
+    <el-dialog :title="dialogTitle" :visible.sync="dialogTableVisible">
+      <div ref="analysisEchart" style="width: 100%; height: 500px" />
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import {
-  // distributeRecord,
-  // findEsCompanyWaringNewTop,
-  findEsCompanyWaringCountTop
-  // findEsCompanyWaringTarget,
-  // domnLoadFile
-} from '@/api/public_sentiment/company_public_sentiment'
+import { findEsCompanyWaringCountTop } from '@/api/public_sentiment/company_public_sentiment'
 import { system, systemDept } from '@/api/analysis/hot_analysis'
 import Autocomplete from './compoments/autocomplete'
-import CompanyTable from './compoments/company_table'
+import listTable from '@/components/table/listTable'
+import { parseTime } from '@/utils'
+var echarts = require('echarts/lib/echarts')
 
 export default {
   name: 'CompanysPublicSentiment',
-  components: { Autocomplete, CompanyTable },
+  components: { Autocomplete, listTable },
   data() {
     return {
-      loading: true,
+      tableData: {
+        title: '公司舆情预警表',
+        listApi: {
+          serviceFN: findEsCompanyWaringCountTop, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '目标公司', // 表头名称
+            propName: 'companyName', // 查询返回的字段名
+          },
+          {
+            label: '舆情总数量',
+            propName: 'count',
+            width: '230px',
+          },
+          {
+            label: '最新舆情时间',
+            propName: 'releaseTime',
+            width: '300px',
+            formatter: (value, row) => {
+              // 格式化当前表格数据    参数value 为当前列的值  row为当前行数据
+              const date = new Date(Number(value))
+              return parseTime(date)
+            },
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '详情',
+                commandName: 'details',
+                type: 'primary',
+              },
+              {
+                label: '分析',
+                commandName: 'analysisData',
+                type: 'success',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+
       // 表单数据
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
         deptId: '',
         orgId: '',
         targetCompany: '',
@@ -118,23 +160,23 @@ export default {
         endTime: '',
         deduplicate: false,
         emotionType: '',
-        like: true
+        like: true,
       },
       optionCate: {
         重复: '',
-        不重复: false
+        不重复: false,
       },
       optionEmotionType: {
         负面: -1,
         中性: 0,
-        正面: 1
+        正面: 1,
       },
-      total: 0,
       time: '',
       optionsSystem: [],
       optionsSystemDept: [],
       userInfo: {},
-      quanWordList: []
+      dialogTitle: '',
+      dialogTableVisible: false,
     }
   },
   created() {
@@ -185,20 +227,20 @@ export default {
       this.queryForm.deptId = val
       this.getDistribute()
     },
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
+    },
     // 页面数据
     async getDistribute() {
       document.body.click()
-      //   console.log(this.queryForm)
-      var params = { ...{}, ...this.queryForm }
-      var res = await findEsCompanyWaringCountTop(params)
-      this.quanWordList = res.rows
-      this.total = res.total
-      this.loading = false
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
+      })
     },
     // 查询
     queryQuanIndex(val) {
-      this.loading = true
-      this.queryForm.pageNo = 1
       if (!!this.time && this.time.length !== 0) {
         this.queryForm.startTime = new Date(this.time[0]).getTime()
         this.queryForm.endTime =
@@ -213,26 +255,73 @@ export default {
       this.queryForm.targetCompany = targetCompany
       this.queryQuanIndex()
     },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getDistribute()
+    details(val) {
+      this.$router.push({
+        path:
+          '/configuration/public_sentiment/details_page/company_public_page',
+        query: {
+          deptId: val.deptId,
+          targetCompany: decodeURIComponent(val.companyName),
+          orgId: val.orgId,
+          deduplicate: false,
+        },
+      })
     },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
-      this.getDistribute()
-    }
-  }
+    analysisData(scope, index) {
+      this.dialogTableVisible = true
+      this.dialogTitle = scope.companyName
+      this.$nextTick(() => {
+        this.getEchart(scope)
+      })
+    },
+    getEchart(scope) {
+      var data = scope.nameValueResList
+      var legendData = data.map((item) => {
+        return item.name
+      })
+      const option = {
+        title: {
+          text: '数据分析',
+          left: 'center',
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b} : {c} ({d}%)',
+        },
+        legend: {
+          type: 'scroll',
+          top: 40,
+          data: legendData,
+        },
+        series: [
+          {
+            type: 'pie',
+            radius: '55%',
+            center: ['50%', '60%'],
+            data: data,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)',
+              },
+            },
+          },
+        ],
+      }
+      echarts.init(this.$refs['analysisEchart']).setOption(option)
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
 .app-container {
-  .pagination {
-    text-align: right;
-    margin-top: 20px;
+  .el-form:last-child {
+    .el-form-item {
+      margin-bottom: 0;
+    }
   }
+
 }
 </style>

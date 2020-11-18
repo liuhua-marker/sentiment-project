@@ -27,7 +27,7 @@ export default {
   data() {
     return {
       title: '负面鹰眼系统平台',
-      // title: '企业互联网负面预警系统',
+      // title: '招商证券智能舆情系统',
       logo: logoPng
     }
   }
@@ -50,6 +50,7 @@ export default {
   height: 65px;
   line-height: 65px;
   background: #1c64a9;
+  // background: #409EFF;
   text-align: center;
   overflow: hidden;
 

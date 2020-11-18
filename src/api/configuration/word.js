@@ -25,7 +25,7 @@ export function handleDelete(ids) {
     data: ids
   })
 }
-// 修改信息
+// 编辑信息
 export function confsourcelabelUpdate(data) {
   return request({
     url: `/yuqing-configuration/configuration/confsourcelabel/update`,

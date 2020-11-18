@@ -1,24 +1,52 @@
 <template>
-  <div class="app-container box">
-    <!-- 导航 -->
-    <div class="app-filters">
-      <el-radio-group v-model="queryForm.configTypeId" @change="switchLexicon">
-        <el-radio-button
-          v-for="item in radioLable"
-          :key="item.configTypeId"
-          :label="item.configTypeId"
-        >{{ item.configTypeName }}</el-radio-button>
-      </el-radio-group>
-    </div>
-    <!-- 搜索查询 -->
-    <div class="app-tabs">
-      <el-form :inline="true" class="demo-form-inline">
-        <el-form-item v-if="userInfo.orgId === '0'" label="所属方案:">
+  <div>
+    <el-tabs
+      type="border-card"
+      v-model="queryForm.configTypeId"
+      @tab-click="getQuanIndex"
+    >
+      <el-tab-pane
+        v-for="item in radioLable"
+        :key="item.configTypeId"
+        :label="item.configTypeName"
+        :name="item.configTypeId"
+      >
+        <listFilters
+          :ref="'filter' + item.configTypeId"
+          :options="filterOption"
+          @change="queryQuanIndex"
+        />
+        <list-table
+          :ref="item.configTypeId"
+          :options="tableData"
+          @command="listCommand"
+        />
+      </el-tab-pane>
+    </el-tabs>
+
+    <!-- 新增、编辑的对话框 -->
+    <el-dialog
+      :close-on-click-modal="false"
+      title="指标配置"
+      :visible.sync="dialogVisible"
+      width="55%"
+    >
+      <el-form
+        ref="ruleForm"
+        :model="ruleForm"
+        :rules="rules"
+        label-width="100px"
+        class="demo-ruleForm"
+      >
+        <el-form-item
+          v-if="userInfo.orgId === '0'"
+          label="所属方案："
+          prop="solutionId"
+        >
           <el-select
-            v-model="queryForm.solutionId"
-            clearable
+            v-model="ruleForm.solutionId"
+            :disabled="isEdite"
             placeholder="请选择方案"
-            @change="queryQuanIndex"
           >
             <el-option
               v-for="item in options"
@@ -28,102 +56,35 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词查询:">
+        <el-form-item label="名称：" prop="configName">
           <el-input
-            v-model.trim="queryForm.queryWord"
-            placeholder="名称/关键字/备注"
-            size="medium"
-            @keyup.enter.native="queryQuanIndex"
+            v-model.trim="ruleForm.configName"
+            placeholder="请输入名称"
           />
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="queryQuanIndex">查询</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="app-table">
-      <div class="app-head">
-        基础配置表
-        <div class="fr">
-          <el-button type="primary" @click="addQuanIndex">新增</el-button>
-        </div>
-      </div>
-
-      <el-table v-loading="loading" :data="quanWordList" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column label="名称" prop="configName" />
-        <el-table-column label="关键字" width="220" prop="configKey" />
-        <el-table-column label="值" width="220" prop="configValue" />
-        <el-table-column label="所属方案" width="200" prop="solutionName" />
-        <el-table-column label="新增时间" width="200">
-          <template slot-scope="scope">{{ scope.row.createTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</template>
-        </el-table-column>
-        <el-table-column label="备注" width="220" prop="remark" />
-        <el-table-column label="选择" width="200">
-          <template slot-scope="scope">
-            <el-button type="primary" size="small" @click="handleAddOrUpdate(scope.row)">修改</el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="handleDelete([scope.row.basicConfigId])"
-            >删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryForm.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryForm.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
-
-    <!-- 新增、修改的对话框 -->
-    <el-dialog
-      :close-on-click-modal="false"
-      title="指标配置"
-      :visible.sync="dialogVisible"
-      width="55%"
-      :before-close="clearDialog"
-    >
-      <el-form
-        ref="ruleForm"
-        :model="ruleForm"
-        :rules="rules"
-        label-width="100px"
-        class="demo-ruleForm"
-      >
-        <el-form-item v-if="userInfo.orgId === '0'" label="所属方案：" prop="solutionId">
-          <el-select v-model="ruleForm.solutionId" :disabled="isEdite" placeholder="请选择方案">
-            <el-option
-              v-for="item in options"
-              :key="item.solutionId"
-              :label="item.solutionName"
-              :value="item.solutionId"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="名称：" prop="configName">
-          <el-input v-model.trim="ruleForm.configName" placeholder="请输入名称" />
-        </el-form-item>
         <el-form-item label="关键字：" prop="configKey">
-          <el-input v-model.trim="ruleForm.configKey" placeholder="请输入关键字" />
+          <el-input
+            v-model.trim="ruleForm.configKey"
+            placeholder="请输入关键字"
+          />
         </el-form-item>
         <el-form-item label="值：" prop="configValue">
-          <el-input v-model.trim="ruleForm.configValue" placeholder="请输入值" />
+          <el-input
+            v-model.trim="ruleForm.configValue"
+            placeholder="请输入值"
+          />
         </el-form-item>
         <el-form-item label="备注：" prop="remark">
-          <el-input v-model.trim="ruleForm.remark" type="textarea" :rows="2" placeholder="备注说明" />
+          <el-input
+            v-model.trim="ruleForm.remark"
+            type="textarea"
+            :rows="2"
+            placeholder="备注说明"
+          />
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="clearDialog">取 消</el-button>
+        <el-button @click="dialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="quanIndexFrom">确 定</el-button>
       </span>
     </el-dialog>
@@ -136,37 +97,112 @@ import {
   confwordstype,
   save,
   editeQuanIndexFrom,
-  handleDelete
+  handleDelete,
 } from '@/api/configuration_item/basics_configuration'
 import { list, selectNowSolution } from '@/api/configuration/ruls'
-import { getToken } from '@/utils/auth'
+import listTable from '@/components/table/listTable'
+import listFilters from '@/components/filter/listFilters'
 
 export default {
   name: 'BasicsConfiguration',
-
+  components: { listFilters, listTable },
   data() {
     return {
+      filterOption: [
+        {
+          componentsName: 'el-select',
+          label: '所属方案',
+          paramsName: 'solutionId',
+          placeholder: '请选择方案',
+          options: [],
+          hidden: false,
+        },
+        {
+          componentsName: 'el-input',
+          label: '关键词查询',
+          paramsName: 'queryWord',
+          placeholder: '名称/关键字/备注',
+        },
+      ],
+      tableData: {
+        title: '基础配置表',
+        listBtns: [
+          {
+            label: '新增',
+            commandName: 'addQuanIndex',
+            type: 'primary',
+          },
+        ],
+        listApi: {
+          serviceFN: page, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '名称', // 表头名称
+            propName: 'configName', // 查询返回的字段名
+          },
+          {
+            label: '关键字',
+            propName: 'configKey',
+          },
+          {
+            label: '值',
+            propName: 'configValue',
+          },
+          {
+            label: '所属方案',
+            propName: 'solutionName',
+          },
+          {
+            label: '新增时间',
+            propName: 'createTime',
+          },
+          {
+            label: '备注',
+            propName: 'remark',
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '编辑',
+                commandName: 'handleAddOrUpdate',
+                type: 'primary',
+              },
+              {
+                label: '删除',
+                commandName: 'handleDelete',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+
       // 表单数据
-      loading: true,
       isEdite: false,
-      quanWordList: [],
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
         queryWord: '',
         solutionId: '',
-        configTypeId: ''
+        configTypeId: '',
       },
       solutionForm: {
         pageNo: 1,
-        pageSize: 1000
+        pageSize: 1000,
       },
       type: {
         pageNo: 1,
         pageSize: 1000,
-        configClassifyCode: 'basic'
+        configClassifyCode: 'basic',
       },
-      total: 0,
       options: [],
       radioLable: [],
       // 验证规则
@@ -174,184 +210,159 @@ export default {
         configName: [
           {
             required: true,
-            message: '请输入起始值',
-            trigger: 'blur'
-          }
+            message: '请输入指标名称',
+            trigger: 'blur',
+          },
         ],
         configKey: [
           {
             required: true,
-            message: '请输入终止值',
-            trigger: 'blur'
-          }
+            message: '请输入指标关键词',
+            trigger: 'blur',
+          },
         ],
         configValue: [
           {
             required: true,
-            message: '请输入级别',
-            trigger: 'blur'
-          }
+            message: '请输入指标值',
+            trigger: 'blur',
+          },
         ],
         solutionId: {
           required: true,
           message: '请选择所属方案',
-          trigger: 'change'
-        }
+          trigger: 'change',
+        },
       },
-      // 修改
+      // 编辑
       dialogVisible: false,
-      ruleForm: {
-        configName: '',
-        configKey: '',
-        configValue: '',
-        remark: '',
-        solutionId: '',
-        configTypeId: ''
-      },
+      ruleForm: {},
       userInfo: {},
-      isHidden: false,
-      // 导入
-      tokenHeader: {
-        Authorization: getToken()
-      }
     }
   },
   created() {
     // 获取管理员身份
     this.userInfo = this.$store.getters.userInfo
     // 获取页面数据
-    this.get()
+    this.getconfigTypeId()
   },
   methods: {
-    async get() {
-      await this.getconfigTypeId()
-      await this.getQuanIndex()
-    },
     // 获取页面数据
-    async getconfigTypeId() {
+    getconfigTypeId() {
       // 导航栏数据
-      await confwordstype(this.type).then((arr) => {
-        this.radioLable = arr.rows
-        this.queryForm.configTypeId = this.radioLable[0].configTypeId
-        this.action = this.action + '/' + this.queryForm.configTypeId
+      confwordstype(this.type).then((res) => {
+        this.radioLable = res.rows
+
+        this.queryForm.configTypeId = res.rows[0].configTypeId
+        this.getQuanIndex()
       })
       // 方案
-      await list(this.solutionForm).then((res) => {
+      list(this.solutionForm).then((res) => {
         this.options = res.rows
+        this.filterOption[0].options = []
+        this.filterOption[0].hidden = false
+        res.rows.forEach((val) => {
+          const option = { value: val.solutionId, label: val.solutionName }
+          this.filterOption[0].options.push(option)
+        })
       })
       if (this.userInfo.orgId !== '0') {
         // 部门已选方案
-        await selectNowSolution(this.userInfo.deptId).then((ress) => {
+        selectNowSolution(this.userInfo.deptId).then((ress) => {
           if (ress.data === undefined) {
             this.$message({
               type: 'warning',
-              message: '请联系管理员配置方案...'
+              message: '请联系管理员配置方案...',
             })
           } else {
             this.queryForm.solutionId = ress.data.solutionId
+            this.filterOption[0].hidden = true
           }
         })
       }
     },
-    async getQuanIndex() {
-      const data = await page(this.queryForm)
-      this.quanWordList = data.rows
-      this.total = data.total
-      this.loading = false
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
     },
-    switchLexicon(label) {
-      this.queryForm.pageNo = 1
-      this.queryForm.configTypeId = label
-      this.getQuanIndex()
+    // 获取页面数据
+    getQuanIndex(index) {
+      this.$nextTick(() => {
+        this.$refs[this.queryForm.configTypeId][0].search(this.queryForm)
+      })
     },
     // 查询
     queryQuanIndex(v) {
-      this.loading = true
-      this.queryForm.pageNo = 1
-      this.getQuanIndex()
-    },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getQuanIndex()
-    },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
+      this.queryForm.solutionId = v.solutionId
+      this.queryForm.queryWord = v.queryWord
       this.getQuanIndex()
     },
     // 新增
     addQuanIndex() {
+      this.ruleForm = {
+        configName: '',
+        configKey: '',
+        configValue: '',
+        remark: '',
+        solutionId: '',
+        configTypeId: '',
+      }
       this.isEdite = false
-      this.dialogVisible = true
       this.ruleForm.solutionId = this.queryForm.solutionId
       this.ruleForm.configTypeId = this.queryForm.configTypeId
+      this.dialogVisible = true
     },
-    // 根据id修改数据
+    // 根据id编辑数据
     handleAddOrUpdate(res) {
       this.isEdite = true
       this.dialogVisible = true
       this.ruleForm = JSON.parse(JSON.stringify(res))
     },
     quanIndexFrom() {
-      this.$refs.ruleForm.validate(async(valid) => {
+      this.$refs.ruleForm.validate(async (valid) => {
         if (!valid) return
         // 成功了调用接口
+        let filter = 'filter' + this.queryForm.configTypeId
         var res = {}
         if (!this.isEdite) {
           // 新增
           res = await save(this.ruleForm)
         } else {
-          // 修改
+          // 编辑
           res = await editeQuanIndexFrom(this.ruleForm)
         }
         if (res.code === 200) {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
-          this.getQuanIndex() // 刷新列表
+          this.$refs[filter][0].filterParams.queryWord = ''
+          this.$refs[filter][0].filterParams.solutionId = ''
+          this.dialogVisible = false
+          this.queryQuanIndex(this.$refs[filter][0].filterParams) // 刷新列表
         } else {
           this.$message({
             type: 'error',
             dangerouslyUseHTMLString: true,
-            message: res.data
+            message: res.data,
           })
         }
-        this.clearDialog() // 关闭表单
       })
-    },
-    clearDialog() {
-      // this.ruleForm = {
-      //   configName: '',
-      //   configKey: '',
-      //   configValue: '',
-      //   remark: '',
-      //   solutionId: '',
-      //   configTypeId: ''
-      // }
-      this.ruleForm.solutionId = ''
-      this.ruleForm.configName = ''
-      this.ruleForm.configKey = ''
-      this.ruleForm.configValue = ''
-      this.ruleForm.remark = ''
-      // 刷新列表
-      this.dialogVisible = false
-      this.$refs.ruleForm.clearValidate()
     },
     // 根据id删除数据
     handleDelete(ids) {
+      let id = [ids.basicConfigId]
       this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
       })
         .then(() => {
-          handleDelete(ids).then((res) => {
+          handleDelete(id).then((res) => {
             this.$message({
               type: 'success',
-              message: '删除成功!'
+              message: '删除成功!',
             })
             this.getQuanIndex()
           })
@@ -359,40 +370,13 @@ export default {
         .catch(() => {
           this.$message({
             type: 'info',
-            message: '已取消删除'
+            message: '已取消删除',
           })
         })
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  .signal {
-    border: 1px solid #ccc;
-    padding: 0 20px;
-  }
-  .app-head {
-    height: 36px;
-    line-height: 36px;
-    font-size: 14px;
-    font-weight: 700;
-  }
-  .app-tabs {
-    margin-top: 20px;
-  }
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-    .el-table {
-      width: 100%;
-      margin: 10px 0;
-    }
-  }
-  .pagination {
-    text-align: right;
-  }
-}
 </style>

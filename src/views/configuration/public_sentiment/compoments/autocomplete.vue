@@ -15,8 +15,9 @@
       <template slot-scope="{item}">
         <div class="compare-name" v-html="item.companyName" />
       </template>
-      <el-button slot="append" @click="RefreshData">查询</el-button>
+      
     </el-autocomplete>
+    <el-button type="primary" @click="RefreshData">查询</el-button>
   </div>
 </template>
 
@@ -103,5 +104,8 @@ export default {
 }
 /deep/ .el-input-group__append:hover {
   background-color: #409eff !important;
+}
+.el-button {
+  margin-left: 10px;
 }
 </style>

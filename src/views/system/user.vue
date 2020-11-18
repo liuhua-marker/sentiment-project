@@ -16,7 +16,7 @@
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="手机号码">
+        <el-form-item>
           <el-button type="primary" size="small" @click="handleSearch">查询</el-button>
           <el-button type="primary" @click="handleAdd">新增</el-button>
         </el-form-item>
@@ -52,7 +52,7 @@
               <template slot-scope="scope">{{ sexs[scope.row.sex] }}</template>
             </el-table-column>
             <el-table-column label="手机号码" prop="telephone" />
-            <el-table-column label="状态">
+            <el-table-column label="状态" width="180">
               <template slot-scope="scope">
                 <el-switch
                   v-model="scope.row.status"

@@ -92,7 +92,7 @@ export function handleDelete(ids) {
     data: ids
   })
 }
-// 修改信息
+// 编辑信息
 export function confcompanyUpdate(data) {
   return request({
     url: `/yuqing-configuration/confcompany/update`,

@@ -2,23 +2,35 @@
   <div class="app-container">
     <el-row :gutter="20">
       <el-col :span="18">
-        <div v-if="JSON.stringify(distributeRecordForm) !== '{}'" class="box article">
+        <div
+          v-if="JSON.stringify(distributeRecordForm) !== '{}'"
+          class="box article"
+        >
           <div class="title">{{ distributeRecordForm.title }}</div>
           <el-row style="margin: 20px 0 50px">
             <el-col :span="8" style="margin-left: 30%">
-              <div style="font-size: 16px;">
+              <div style="font-size: 16px">
                 发表时间:
-                <span>{{ Number(distributeRecordForm.releaseTime) | parseTime() }}</span>
+                <span>{{
+                  Number(distributeRecordForm.releaseTime) | parseTime()
+                }}</span>
               </div>
             </el-col>
             <el-col :span="8">
-              <div style="font-size: 16px;">
+              <div style="font-size: 16px">
                 来源:
                 <a
                   :href="distributeRecordForm.sourceUrl"
                   target="view_window"
                   style="color: #0984ff"
-                >{{ distributeRecordForm.source === '' ? (distributeRecordForm.dataType === 'wechat' ? '微信': '未知') : distributeRecordForm.source }}</a>
+                  >{{
+                    distributeRecordForm.source === ''
+                      ? distributeRecordForm.dataType === 'wechat'
+                        ? '微信'
+                        : '未知'
+                      : distributeRecordForm.source
+                  }}</a
+                >
               </div>
             </el-col>
           </el-row>
@@ -34,27 +46,43 @@
             class="info_about"
           >
             <i class="el-icon-office-building info_icon" />
-            <el-button type="text" @click="details(distributeRecordForm, key)">{{ key }}</el-button>
+            <el-button
+              type="text"
+              @click="details(distributeRecordForm, key)"
+              >{{ key }}</el-button
+            >
           </div>
         </div>
         <div class="box vant_info cdct">
           <div class="clearfix">
             <div class="fl">传导穿透</div>
-            <svg-icon icon-class="fullscreen" class="fullscreen_icon fr" @click="fullscreen" />
+            <svg-icon
+              icon-class="fullscreen"
+              class="fullscreen_icon fr"
+              @click="fullscreen"
+            />
           </div>
           <div id="DaoCharts" ref="DaoCharts" />
         </div>
       </el-col>
     </el-row>
     <!-- 传到弹框 -->
-    <el-dialog title="传导穿透" :visible.sync="fullscreenDialogVisible" width="50%" center>
+    <el-dialog
+      title="传导穿透"
+      :visible.sync="fullscreenDialogVisible"
+      width="50%"
+      center
+    >
       <div id="dialogCharts" ref="dialogCharts" />
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { yqSearchInfo } from '@/api/public_sentiment/public_sentiment_page'
+import {
+  yqSearchInfo,
+  labelInfo,
+} from '@/api/public_sentiment/public_sentiment_page'
 // import screenfull from 'screenfull'
 
 // 引入基本模板
@@ -72,27 +100,38 @@ export default {
     return {
       // 表单数据
       distributeRecordForm: {},
-      fullscreenDialogVisible: false
+      fullscreenDialogVisible: false,
+      info: null,
     }
   },
   watch: {
     async $route() {
+      if (this.$route.query.name === '标签标注') {
+        this.info = labelInfo
+      } else {
+        this.info = yqSearchInfo
+      }
       this.getDistributeRecord(this.$route.query.id)
-    }
+    },
   },
   beforeCreate() {
     if (!this.$route.query.id) {
       this.$router.push({
-        path: '/configuration/public_sentiment/alert_public_sentiment'
+        path: '/configuration/public_sentiment/alert_public_sentiment',
       })
     }
   },
   created() {
+    if (this.$route.query.name === '标签标注') {
+      this.info = labelInfo
+    } else {
+      this.info = yqSearchInfo
+    }
     this.getDistributeRecord(this.$route.query.id)
   },
   methods: {
     getDistributeRecord(id) {
-      yqSearchInfo(id).then((res) => {
+      this.info(id).then((res) => {
         this.distributeRecordForm = res.data
         if (!this.distributeRecordForm.nickname) {
           this.distributeRecordForm.nickname = '未知'
@@ -152,7 +191,7 @@ export default {
         '#40e0d0',
         '#054ac9',
         '#e40fdd',
-        '#ffa600'
+        '#ffa600',
       ]
       const color = {}
       const categories = []
@@ -161,8 +200,8 @@ export default {
         categories.push({
           name: item,
           itemStyle: {
-            color: color[item]
-          }
+            color: color[item],
+          },
         })
       })
       data.data.forEach((node) => {
@@ -170,17 +209,17 @@ export default {
           normal: {
             shadowBlur: 10,
             shadowColor: color[node.category],
-            color: color[node.category]
-          }
+            color: color[node.category],
+          },
         }
       })
       data.links.forEach((link) => {
         link.label = {
           align: 'center',
-          fontSize: 12
+          fontSize: 12,
         }
         link.lineStyle = {
-          color: '#000'
+          color: '#000',
         }
       })
       var option = {
@@ -191,11 +230,11 @@ export default {
             left: 'left',
             top: 10,
             tooltip: {
-              show: true
+              show: true,
             },
             selectedMode: 'false',
-            data: categories.map((x) => x.name)
-          }
+            data: categories.map((x) => x.name),
+          },
         ],
         series: [
           {
@@ -213,28 +252,28 @@ export default {
               normal: {
                 show: true,
                 textStyle: {
-                  fontSize: 12
+                  fontSize: 12,
                 },
                 formatter(x) {
                   return x.data.name
-                }
-              }
+                },
+              },
             },
             label: {
               normal: {
                 show: true,
-                position: 'top'
-              }
+                position: 'top',
+              },
             },
             force: {
               gravity: 0,
               edgeLength: 70,
-              repulsion: 700
+              repulsion: 700,
             },
             data: data.data,
-            links: data.links
-          }
-        ]
+            links: data.links,
+          },
+        ],
       }
       myChart.setOption(option, true)
       myChart.hideLoading()
@@ -248,8 +287,8 @@ export default {
           deptId: val.deptId,
           targetCompany: key,
           orgId: val.orgId,
-          deduplicate: 0
-        }
+          deduplicate: 0,
+        },
       })
     },
     fullscreen() {
@@ -258,14 +297,14 @@ export default {
         var myChart = echarts.init(document.querySelector('#dialogCharts'))
         this.boxData(myChart, this.distributeRecordForm.spreadPathRes)
       }, 500)
-    }
+    },
     // fullscreen() {
     //   const element = document.getElementById('DaoCharts')
     //   if (screenfull.enabled) {
     //     screenfull.toggle(element)
     //   }
     // },
-  }
+  },
 }
 </script>
 

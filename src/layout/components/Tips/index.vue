@@ -1,37 +1,48 @@
 <template>
-  <div v-if="userInfo.deptId != 0" class="header-tips">
-    <el-popover v-model="visible" width="400" trigger="manual">
-      <div>
-        <div class="pop_mess clearfix">
-          <div class="fl">消息中心</div>
-          <div class="fr">
-            <el-switch
-              v-model="value"
-              active-color="#13ce66"
-              active-text="关"
-              inactive-text="开"
-              inactive-color="#ff4949"
-            />
-            <span class="pop_tz">消息通知</span>
-          </div>
+  <el-dropdown @command="handleCommand" placement="bottom" trigger="click">
+    <el-badge :value="valNum" :max="9">
+      <svg-icon class-name="tips-icon" @click="clickNum" icon-class="bell" />
+    </el-badge>
+    <el-dropdown-menu slot="dropdown">
+      <div class="pop_mess clearfix">
+        <div class="fl">消息中心</div>
+        <div class="fr">
+          <el-switch
+            v-model="value"
+            active-color="#13ce66"
+            active-text="关"
+            inactive-text="开"
+            inactive-color="#ff4949"
+            @change="changeTip"
+          />
+          <span class="pop_tz">消息通知</span>
         </div>
-        <div
-          v-for="(item,index) in infoList"
-          :key="index"
-          class="pop_YQ clearfix"
-          @click="detailsPage(item.id)"
-        >
+      </div>
+      <el-dropdown-item
+        v-for="(item, index) in infoList"
+        :key="index"
+        class="pop_YQ clearfix"
+        @click="detailsPage(item.id)"
+        :command="item.id"
+      >
+        <div style="width: 400px;">
           <div class="title">
-            <el-tag v-if="item.emotionType === 1" effect="dark" type="success" size="mini">正</el-tag>
-            <el-tag v-if="item.emotionType === -1" effect="dark" type="danger" size="mini">负</el-tag>
+            <el-tag
+              v-if="item.emotionType === 1"
+              effect="dark"
+              type="success"
+              size="mini"
+              >正</el-tag
+            >
+            <el-tag
+              v-if="item.emotionType === -1"
+              effect="dark"
+              type="danger"
+              size="mini"
+              >负</el-tag
+            >
             <span style="margin-right: 10px">{{ item.title }}</span>
-
           </div>
-          <!-- <el-row class="text">
-            <el-col :span="11">{{ item.companyName.slice(0,12) }}</el-col>
-            <el-col :span="5">{{ item.source }}</el-col>
-            <el-col :span="8">{{ item.releaseTimeStr }}</el-col>
-          </el-row> -->
           <div class="text clearfix">
             <div class="fl">{{ item.companyName }}</div>
             <div class="fr" style="margin-right: 10px">{{ item.source }}</div>
@@ -40,16 +51,12 @@
             <div class="fr">{{ item.releaseTimeStr }}</div>
           </div>
         </div>
-        <div class="pop_YQ pop_gd">
-          <el-button type="text" @click="more">查看更多</el-button>
-        </div>
-      </div>
-
-      <el-badge slot="reference" :value="valNum" :max="9" class="item">
-        <svg-icon class-name="tips-icon" icon-class="bell" @click.stop="click" />
-      </el-badge>
-    </el-popover>
-  </div>
+      </el-dropdown-item>
+      <el-dropdown-item class="pop_YQ pop_gd" command="more">
+        <el-button type="text">查看更多</el-button>
+      </el-dropdown-item>
+    </el-dropdown-menu>
+  </el-dropdown>
 </template>
 
 <script>
@@ -62,25 +69,19 @@ export default {
   // name: 'Tips',
   data() {
     return {
-      visible: false,
       valNum: null,
       timer: null,
       value: true,
       userInfo: {},
-      infoList: []
+      infoList: [],
     }
   },
   computed: {
-    ...mapGetters(['isDot'])
+    ...mapGetters(['isDot']),
   },
-  watch: {
-
-  },
+  watch: {},
   mounted() {
     this.userInfo = this.$store.getters.userInfo
-    if (this.userInfo.deptId === '0') {
-      return
-    }
     this.handdleMsg(JSON.stringify(this.userInfo))
     this.getDistributeRecord()
   },
@@ -93,11 +94,17 @@ export default {
     // }
   },
   methods: {
+    handleCommand(e) {
+      if (e === 'more') {
+        this.more()
+      } else {
+        this.detailsPage(e)
+      }
+    },
     handleIsDot() {
       this.$store.dispatch('app/isDot', true)
     },
-    click() {
-      this.visible = !this.visible
+    clickNum() {
       this.valNum = null
     },
     getDistributeRecord() {
@@ -105,31 +112,36 @@ export default {
         deptId: this.userInfo.deptId,
         orgId: this.userInfo.orgId,
         pageNo: 1,
-        pageSize: 8,
+        pageSize: 6,
         deduplicate: false,
-        analysisTimeSort: true
+        analysisTimeSort: true,
       }
       distributeRecord(data).then((res) => {
         this.infoList = res.rows
       })
     },
+    changeTip(e) {
+      if (e) {
+        this.handdleMsg(JSON.stringify(this.userInfo))
+      } else {
+        this.WebSocket.ws.close()
+        this.WebSocket.ws.onclose = function (evt) {
+          console.log('Connection closed.')
+        }
+      }
+    },
     // 发送和接收消息
     handdleMsg(msg) {
-      if (this.userInfo.deptId === '0') {
-        return
-      }
       const _this = this
       if (_this.WebSocket.ws && _this.WebSocket.ws.readyState === 1) {
         console.log('连接开启...')
         _this.WebSocket.ws.send(msg)
       }
-      _this.WebSocket.ws.onmessage = function(res) {
+      _this.WebSocket.ws.onmessage = function (res) {
         if (_this.value) {
           _this.getyuQing(res.data)
         }
-        if (!_this.visible) {
-          _this.valNum += 1
-        }
+        _this.valNum += 1
         // 首页舆情数据刷新
         if (_this.timer) {
           clearTimeout(_this.timer)
@@ -155,10 +167,12 @@ export default {
           box = `<div style="display: inline-block;padding: 0 3px;color: #fff;margin-right: 2px;background: #ff4949;border-radius: 4px;">负</div>`
         }
         const message = `
-          <div style="cursor: pointer">
-            <h4 style="margin: 5px 0">${box}${item.title}
-            </h4>
-            <div><b>摘要：</b>${item.abstracts.slice(0, 80)}</div>
+          <div style="cursor: pointer; width:260px;">
+            <h4 style="margin: 5px 0;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">${box}${item.title}</h4>
+            <div style="text-overflow: -o-ellipsis-lastline;overflow: hidden;text-overflow: ellipsis;display: -webkit-box;-webkit-line-clamp: 3;-webkit-box-orient: vertical;"><b>摘要：</b>${item.abstracts.slice(
+              0,
+              80
+            )}</div>
             <div  style="font-size: 12px;color: #999" class="clearfix">
               <div class="fl">${item.source}</div>  
               <div class="fr">${item.releaseTimeStr}</div>
@@ -167,18 +181,17 @@ export default {
         const list = this.$notify({
           dangerouslyUseHTMLString: true,
           message: message,
-          duration: 5000,
+          duration: 0,
           customClass: 'notify',
           position: 'bottom-right',
           onClick(e) {
             _this.detailsPage(item.id, list)
-          }
+          },
         })
       })
     },
     // 跳转到详情页
     detailsPage(val, list) {
-      this.visible = false
       // const { href } = this.$router.resolve({
       //   path: '/configuration/public_sentiment/details_page/alert_public_page',
       //   query: { id: val }
@@ -186,7 +199,7 @@ export default {
       // window.open(href, '_blank')
       this.$router.push({
         path: '/configuration/public_sentiment/details_page/alert_public_page',
-        query: merge({ id: val })
+        query: merge({ id: val }),
       })
       if (list) {
         list.close()
@@ -195,40 +208,33 @@ export default {
     more() {
       if (this.userInfo.isAdmin) {
         this.$router.push({
-          path: '/configuration/public_sentiment/alert_public_sentiment'
+          path: '/configuration/public_sentiment/alert_public_sentiment',
         })
       } else {
         this.$router.push({
-          path: '/configuration/public_sentiment/positive_public_sentiment'
+          path: '/configuration/public_sentiment/positive_public_sentiment',
         })
       }
-      this.visible = false
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.header-tips {
-  font-size: 0 !important;
-  .item {
-    height: 24px;
-  }
-  /deep/ .is-dot {
-    height: 13px !important;
-    width: 13px !important;
-  }
-  .tips-icon {
-    cursor: pointer;
-    font-size: 20px;
-    vertical-align: middle;
-    margin-top: -24px;
-  }
+/deep/.el-badge__content.is-fixed {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+}
+.tips-icon {
+  cursor: pointer;
 }
 .pop_mess {
   font-size: 16px;
   font-weight: 550;
   margin-bottom: 10px;
+  padding: 0 15px;
+  width: 400px;
 }
 .pop_tz {
   font-size: 14px;
@@ -238,11 +244,17 @@ export default {
 .pop_YQ {
   cursor: pointer;
   border-top: 1px solid #eee;
-  padding: 10px 5px;
+  padding: 0 5px;
   .title {
     font-size: 14px;
     font-weight: 500;
     color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis; /* 文字超出部分省略号显示 */
+    white-space: nowrap;
+    .el-tag {
+      margin-right: 5px;
+    }
   }
   .text {
     font-size: 12px;

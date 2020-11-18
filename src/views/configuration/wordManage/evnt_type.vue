@@ -1,71 +1,10 @@
 <template>
-  <div class="app-container box">
+  <div>
     <!-- 搜索查询 -->
-    <div class="app-tabs">
-      <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="情感类型:">
-          <el-select
-            v-model="queryForm.emotionType"
-            clearable
-            placeholder="请选择"
-            @change="queryQuanIndex"
-          >
-            <el-option v-for="(val, key ,i) in options" :key="i" :label="key" :value="val" />
-          </el-select>
-          <!-- <el-input
-            v-model.trim="queryForm.emotionType"
-            placeholder="事件类型"
-            size="medium"
-            @keyup.enter.native="queryQuanIndex"
-          />-->
-        </el-form-item>
-        <el-form-item label="事件类型:">
-          <el-input
-            v-model.trim="queryForm.eventType"
-            placeholder="事件类型"
-            size="medium"
-            @keyup.enter.native="queryQuanIndex"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="queryQuanIndex">查询</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="app-table">
-      <h4 class="fl">事件类型管理</h4>
-      <div class="fr">
-        <el-button type="primary" @click="addQuanIndex">新增</el-button>
-        <el-button type="primary" @click="ImportFiles">导入</el-button>
-        <el-button type="primary" @click="ImportModle">模板下载</el-button>
-      </div>
-      <el-table v-loading="loading" :data="quanWordList" class="app-table-list" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column label="类型编码" prop="eventTypeCode" />
-        <el-table-column label="类型名称" prop="eventType" />
-        <el-table-column label="情感类型" prop="emotionType" />
-        <el-table-column label="备注" prop="remark" />
-        <el-table-column label="新增时间" width="220" prop="createTime" />
-        <el-table-column label="选择" width="220">
-          <template slot-scope="scope">
-            <el-button type="primary" size="small" @click="handleAddOrUpdate(scope.row)">修改</el-button>
-            <el-button type="danger" size="small" @click="handleDelete([scope.row.eventTypeId])">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <el-pagination
-        :current-page="queryForm.pageNo"
-        :page-sizes="[5, 10, 20, 30]"
-        :page-size="queryForm.pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+    <listFilters ref="listFilter" :options="filterOption" @change="queryQuanIndex" />
+    <list-table ref="listTable" :options="tableData" @command="listCommand" />
 
-    <!-- 新增与修改的对话框 -->
+    <!-- 新增与编辑的对话框 -->
     <el-dialog
       :close-on-click-modal="false"
       title="事件类型管理:"
@@ -82,8 +21,26 @@
         <el-form-item label="事件类型：" prop="eventType">
           <el-input v-model.trim="addRuleForm.eventType" />
         </el-form-item>
+        <el-form-item label="类型编码：" prop="eventTypeCode">
+          <el-input v-model.trim="addRuleForm.eventTypeCode" />
+        </el-form-item>
+        <el-form-item label="情感类型：" prop="emotionType">
+          <el-select v-model="addRuleForm.emotionType" placeholder="请选择">
+            <el-option
+              v-for="(k, v, i) in options"
+              :key="i"
+              :label="v"
+              :value="k"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="备注：" prop="remark">
-          <el-input v-model.trim="addRuleForm.remark" type="textarea" :rows="2" />
+          <el-input
+            v-model.trim="addRuleForm.remark"
+            type="textarea"
+            :rows="2"
+          />
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -92,7 +49,11 @@
       </span>
     </el-dialog>
     <!-- 导入 -->
-    <ImportantFlies :action="action" :dialog-visible="DialogVisible" @handleClose="handleClose" />
+    <ImportantFlies
+      :action="action"
+      :dialog-visible="DialogVisible"
+      @handleClose="handleClose"
+    />
   </div>
 </template>
 
@@ -102,34 +63,108 @@ import {
   eventTypeSave,
   eventTypeUpdate,
   eventTypeDelete,
-  domnLoadModel
+  domnLoadModel,
 } from '@/api/configuration/event_type'
 import { getEventTypeMap } from '@/api/configuration/event'
 import { DomnLoadFile } from '@/utils/exportFiles'
 import ImportantFlies from '@/components/Upload/ImportantFlies'
 import { EventTypeImportExcel } from '@/utils/url'
-// import { getToken } from '@/utils/auth'
+import listTable from '@/components/table/listTable'
+import listFilters from '@/components/filter/listFilters'
 
 export default {
   name: 'EventType',
-  components: { ImportantFlies },
+  components: { ImportantFlies, listFilters, listTable },
 
   data() {
     return {
-      loading: true,
+      filterOption: [
+        {
+          componentsName: 'el-input',
+          label: '事件类型',
+          paramsName: 'eventType',
+          placeholder: '事件类型',
+        },
+        {
+          componentsName: 'el-select',
+          label: '情感类型',
+          paramsName: 'emotionType',
+          placeholder: '全部',
+          options: [],
+        },
+      ],
+      tableData: {
+        title: '事件类型管理',
+        listBtns: [
+          {
+            label: '新增',
+            commandName: 'addQuanIndex',
+            type: 'primary',
+          },
+          {
+            label: '导入',
+            commandName: 'ImportFiles',
+            type: '',
+          },
+          {
+            label: '模板',
+            commandName: 'ImportModle',
+            type: '',
+          },
+        ],
+        listApi: {
+          serviceFN: eventTypeList, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '类型名称',
+            propName: 'eventType',
+          },
+          {
+            label: '类型编码', // 表头名称
+            propName: 'eventTypeCode', // 查询返回的字段名
+          },
+          {
+            label: '情感类型',
+            propName: 'emotionType',
+          },
+          {
+            label: '备注',
+            propName: 'remark',
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '编辑',
+                commandName: 'handleAddOrUpdate',
+                type: 'primary',
+              },
+              {
+                label: '删除',
+                commandName: 'handleDelete',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+
       // 表单数据
       isEdite: false,
-      isShow: false,
-      quanWordList: [],
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
         eventType: '',
-        emotionType: ''
+        emotionType: '',
       },
-      options: {},
-      total: 0,
-      // 新增与修改数据
+      // 新增与编辑数据
       addDialogVisible: false,
       addRuleForm: {},
       // 验证规则
@@ -137,11 +172,22 @@ export default {
         eventType: {
           required: true,
           message: '请输入事件类型',
-          trigger: 'blur'
-        }
+          trigger: 'blur',
+        },
+        eventTypeCode: {
+          required: true,
+          message: '请输入类型编码',
+          trigger: 'blur',
+        },
+        emotionType: {
+          required: true,
+          message: '请选择情感类型',
+          trigger: 'change',
+        },
       },
       action: '', // 导入
-      DialogVisible: false
+      DialogVisible: false,
+      options: {}
     }
   },
   created() {
@@ -149,86 +195,89 @@ export default {
     this.getQuanIndex()
     getEventTypeMap().then((res) => {
       this.options = res.data
+      this.filterOption[1].options = []
+      for (let key in res.data) {
+        let option = { value: res.data[key], label: key }
+        this.filterOption[1].options.push(option)
+      }
     })
   },
   methods: {
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
+    },
     // 获取页面数据
-    async getQuanIndex() {
-      const data = await eventTypeList(this.queryForm)
-      this.quanWordList = data.rows
-      this.total = data.total
-      this.loading = false
+    getQuanIndex() {
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
+      })
     },
     // 查询
     queryQuanIndex(v) {
-      this.loading = true
-      this.queryForm.pageNo = 1
-      this.getQuanIndex()
-    },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getQuanIndex()
-    },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
+      this.queryForm.emotionType = v.emotionType
+      this.queryForm.eventType = v.eventType
       this.getQuanIndex()
     },
     // 新增
     addQuanIndex() {
       this.isEdite = false
-      this.addDialogVisible = true
       this.addRuleForm = {
         eventType: '',
-        remark: ''
+        eventTypeCode: '',
+        emotionTypeL: '',
+        remark: '',
       }
+      this.addDialogVisible = true
     },
-    // 根据id修改数据
+    // 根据id编辑数据
     handleAddOrUpdate(data) {
       this.isEdite = true
       this.addDialogVisible = true
       this.addRuleForm = JSON.parse(JSON.stringify(data))
     },
     addQuanIndexFrom() {
-      this.$refs.addRuleForm.validate(async(valid) => {
+      this.$refs.addRuleForm.validate(async (valid) => {
         if (!valid) return
         // 成功了调用接口
         var res = {}
         if (!this.isEdite) {
           res = await eventTypeSave(this.addRuleForm) // 新增
         } else {
-          res = await eventTypeUpdate(this.addRuleForm) // 修改
+          res = await eventTypeUpdate(this.addRuleForm) // 编辑
         }
         if (res.code === 200) {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
+          this.$refs.listFilter.filterParams.emotionType = ''
+          this.$refs.listFilter.filterParams.eventType = ''
           this.addDialogVisible = false // 关闭表单
-          this.getQuanIndex() // 刷新列表
+          this.queryQuanIndex(this.$refs.listFilter.filterParams) // 刷新列表
         } else {
           this.$message({
             type: 'error',
             dangerouslyUseHTMLString: true,
-            message: res.data
+            message: res.data,
           })
         }
       })
     },
     // 根据id删除数据
     handleDelete(ids) {
+      let id = [ids.eventTypeId]
       this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
       })
         .then(() => {
-          eventTypeDelete(ids).then((res) => {
+          eventTypeDelete(id).then((res) => {
             this.$message({
               type: 'success',
-              message: '删除成功!'
+              message: '删除成功!',
             })
             this.getQuanIndex()
           })
@@ -236,7 +285,7 @@ export default {
         .catch(() => {
           this.$message({
             type: 'info',
-            message: '已取消删除'
+            message: '已取消删除',
           })
         })
     },
@@ -254,24 +303,10 @@ export default {
     handleClose() {
       this.DialogVisible = false
       this.getQuanIndex()
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  .app-tabs {
-    margin-top: 20px;
-  }
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-    .app-table-list {
-      width: 100%;
-      margin: 20px 0;
-    }
-  }
-}
 </style>

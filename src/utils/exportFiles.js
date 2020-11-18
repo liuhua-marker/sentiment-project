@@ -29,7 +29,7 @@ var DomnLoadFile = function(domnLoadFile, fname) {
   MessageBox({
     title: '提示',
     type: 'warning',
-    message: `<p>是否确定导出文件</p>`,
+    message: `<p>是否确定导出下载文件</p>`,
     showCancelButton: true,
     closeOnClickModal: false,
     dangerouslyUseHTMLString: true,

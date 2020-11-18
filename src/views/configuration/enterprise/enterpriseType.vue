@@ -1,62 +1,8 @@
 <template>
-  <div class="app-container box">
+  <div>
     <!-- 搜索查询 -->
-    <div class="app-tabs">
-      <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="关键词查询:">
-          <el-input
-            v-model.trim="queryForm.queryWord"
-            placeholder="名称/编码/备注"
-            size="medium"
-            @keyup.enter.native="queryQuanIndex"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="queryQuanIndex">查询</el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="addQuanIndex">新增</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="app-table">
-      <h4>
-        目标类型管理
-        <!-- <el-button type="danger" size="mini" class="fr" @click="toggleSelection()">批量删除</el-button> -->
-      </h4>
-
-      <el-table v-loading="loading" :data="quanWordList" class="app-table-list" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column label="类型名称" prop="companyTypeName" />
-        <el-table-column label="类型编码" prop="companyTypeCode" />
-        <el-table-column label="修改时间">
-          <template slot-scope="scope">{{ scope.row.updateTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</template>
-        </el-table-column>
-        <el-table-column label="备注" prop="remark" />
-        <el-table-column label="选择">
-          <template slot-scope="scope">
-            <el-button type="primary" size="small" @click="handleAddOrUpdate(scope.row)">修改</el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="handleDelete([scope.row.companyTypeId])"
-            >删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryForm.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryForm.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
+    <listFilters ref="listFilter" :options="filterOption" @change="queryQuanIndex" />
+    <list-table ref="listTable" :options="tableData" @command="listCommand" />
 
     <!-- 新增的对话框 -->
     <el-dialog
@@ -64,7 +10,6 @@
       title="企业类型管理"
       :visible.sync="addDialogVisible"
       width="30%"
-      :before-close="clearDialog"
     >
       <el-form
         ref="addRuleForm"
@@ -84,7 +29,7 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="clearDialog">取 消</el-button>
+        <el-button @click="addDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="addQuanIndexFrom">确 定</el-button>
       </span>
     </el-dialog>
@@ -96,48 +41,109 @@ import {
   page,
   save,
   editeQuanIndexFrom,
-  handleDelete
+  handleDelete,
 } from '@/api/enterprise/enterpriseType'
-// import Pagination from '@/components/Pagination'
-// import { getToken } from '@/utils/auth'
+import listTable from '@/components/table/listTable'
+import listFilters from '@/components/filter/listFilters'
+import { parseTime } from '@/utils'
 
 export default {
   name: 'EnterpriseType',
-  // components: { Pagination },
+  components: { listFilters, listTable },
 
   data() {
     return {
-      loading: true,
+      filterOption: [
+        {
+          componentsName: 'el-input',
+          label: '关键词查询',
+          paramsName: 'queryWord',
+          placeholder: '名称/编码/备注',
+          // defaultValue:""
+        },
+      ],
+      tableData: {
+        title: '目标类型管理',
+        listBtns: [
+          {
+            label: '新增',
+            commandName: 'addQuanIndex',
+            type: 'primary',
+          },
+        ],
+        listApi: {
+          serviceFN: page, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '类型名称', // 表头名称
+            propName: 'companyTypeName', // 查询返回的字段名
+          },
+          {
+            label: '类型编码',
+            propName: 'companyTypeCode',
+          },
+          {
+            label: '编辑时间',
+            propName: 'updateTime',
+            formatter: (value, row) => {
+              // 格式化当前表格数据    参数value 为当前列的值  row为当前行数据
+              const date = new Date(value)
+              return parseTime(date)
+            },
+          },
+          {
+            label: '备注',
+            propName: 'remark',
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '编辑',
+                commandName: 'handleAddOrUpdate',
+                type: 'primary',
+              },
+              {
+                label: '删除',
+                commandName: 'handleDelete',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
+      
       // 表单数据
       isEdite: false,
-      quanWordList: [],
       queryForm: {
-        pageNo: 1,
-        pageSize: 10,
         queryWord: '',
-        remark: ''
+        remark: '',
       },
-      total: 0,
       // 新增数据
       addDialogVisible: false,
-      addRuleForm: {
-        companyTypeCode: '',
-        companyTypeName: '',
-        remark: ''
-      },
+      addRuleForm: {},
       // 新增验证规则
       addRules: {
         companyTypeName: {
           required: true,
           message: '请输入类型名称',
-          trigger: 'blur'
+          trigger: 'blur',
         },
         companyTypeCode: {
           required: true,
           message: '请输入类型编码',
-          trigger: 'blur'
-        }
-      }
+          trigger: 'blur',
+        },
+      },
     }
   },
   created() {
@@ -145,37 +151,36 @@ export default {
     this.getQuanIndex()
   },
   methods: {
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
+    },
     // 获取页面数据
-    async getQuanIndex() {
-      const data = await page(this.queryForm)
-      this.quanWordList = data.rows
-      this.total = data.total
-      this.loading = false
+    getQuanIndex() {
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
+      })
     },
     // 查询
     queryQuanIndex(v) {
-      this.loading = true
-      this.queryForm.pageNo = 1
-      this.getQuanIndex()
-    },
-    // 分页
-    handleSizeChange(val) {
-      this.loading = true
-      this.queryForm.pageSize = val
-      this.getQuanIndex()
-    },
-    handleCurrentChange(val) {
-      this.loading = true
-      this.queryForm.pageNo = val
+      this.queryForm.queryWord = v.queryWord
       this.getQuanIndex()
     },
     // 新增
     addQuanIndex() {
+      this.addRuleForm = {
+        companyTypeCode: '',
+        companyTypeName: '',
+        remark: '',
+      }
       this.isEdite = false
       this.addDialogVisible = true
     },
     addQuanIndexFrom() {
-      this.$refs.addRuleForm.validate(async(valid) => {
+      // console.log(this.$refs.listFilter.filterParams)
+      // return
+      this.$refs.addRuleForm.validate(async (valid) => {
         if (!valid) return
         // 成功了调用接口
         var res = {}
@@ -187,43 +192,39 @@ export default {
         if (res.code === 200) {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
-          this.clearDialog() // 关闭表单
-          this.getQuanIndex() // 刷新列表
+          this.$refs.listFilter.filterParams.queryWord = ''
+          this.addDialogVisible = false
+          this.queryQuanIndex(this.$refs.listFilter.filterParams) // 刷新列表
         } else {
           this.$message({
             type: 'error',
             dangerouslyUseHTMLString: true,
-            message: res.data
+            message: res.data,
           })
         }
       })
     },
-    clearDialog() {
-      this.addRuleForm.companyTypeName = ''
-      this.addRuleForm.companyTypeCode = ''
-      this.addRuleForm.remark = ''
-      this.addDialogVisible = false
-    },
-    // 根据id修改数据
-    async handleAddOrUpdate(id) {
+    // 根据id编辑数据
+    handleAddOrUpdate(id) {
       this.isEdite = true
       this.addDialogVisible = true
       this.addRuleForm = JSON.parse(JSON.stringify(id))
     },
     // 根据id删除数据
     handleDelete(ids) {
+      let id = [ids.companyTypeId]
       this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
       })
         .then(() => {
-          handleDelete(ids).then((res) => {
+          handleDelete(id).then((res) => {
             this.$message({
               type: 'success',
-              message: '删除成功!'
+              message: '删除成功!',
             })
             this.getQuanIndex()
           })
@@ -231,30 +232,13 @@ export default {
         .catch(() => {
           this.$message({
             type: 'info',
-            message: '已取消删除'
+            message: '已取消删除',
           })
         })
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  .app-tabs {
-    margin-top: 20px;
-  }
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-    .app-table-list {
-      width: 100%;
-      margin: 20px 0;
-    }
-  }
-  .pagination {
-    text-align: right;
-  }
-}
 </style>

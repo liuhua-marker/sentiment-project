@@ -9,20 +9,20 @@ export function searchByCompany(data) {
   })
 }
 
-// 通过公司检索事件
-export function searchEventByEvent(data) {
+// 通过全部检索新闻
+export function findEsOriginalAll(data) {
   return request({
-    url: `/yuqing-visualize/yuqing_search/searchEventByEvent`,
+    url: `/yuqing-visualize/yuqing_search/findEsOriginalAll`,
     method: 'post',
     data
   })
 }
 
-// 通过公司检索新闻
-export function getYuqingListByCondition(data) {
+// 最热的10条事件
+export function findHotTopicTop(data) {
   return request({
-    url: `/yuqing-visualize/risk_portrait/getYuqingListByCondition`,
-    method: 'post',
+    url: `/yuqing-visualize/hot_event/findHotTopicTop`,
+    method: 'get',
     data
   })
 }

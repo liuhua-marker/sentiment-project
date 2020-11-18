@@ -12,11 +12,27 @@ body {
   text-rendering: optimizeLegibility;
   font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
 }
-
+.el-popper {
+  // min-width: 300px;
+  // max-width: 400px;
+  max-height: 80vh;
+  overflow: hidden;
+}
 label {
   font-weight: 700;
 }
-
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
 html {
   height: 100%;
   box-sizing: border-box;
@@ -30,10 +46,6 @@ html {
 *:before,
 *:after {
   box-sizing: inherit;
-}
-.app-container {
-  // background: #fff;
-  padding: 20px;
 }
 .box {
   background-color: #fff;
@@ -131,7 +143,7 @@ aside {
 
 //main-container全局样式
 .app-container {
-  padding: 20px;
+  padding: 15px;
 }
 
 .components-container {

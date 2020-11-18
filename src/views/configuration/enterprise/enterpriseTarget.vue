@@ -1,9 +1,9 @@
 <template>
-  <div class="app-container box">
+  <div>
     <!-- 搜索查询 -->
-    <div class="app-tabs">
+    <el-card class="app-tabs">
       <el-form :inline="true" class="demo-form-inline">
-        <el-form-item label="目标类型:">
+        <el-form-item label="目标类型">
           <el-select
             v-model="queryForm.companyTypeId"
             clearable
@@ -19,7 +19,10 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <Autocomplete :targetcompany="queryForm.companyName" @RefreshData="RefreshData" />
+          <Autocomplete
+            :targetcompany="queryForm.companyName"
+            @RefreshData="RefreshData"
+          />
         </el-form-item>
         <el-form-item>
           <!-- <el-button type="primary" @click="queryQuanIndex">查询</el-button> -->
@@ -38,73 +41,22 @@
               style="width: 100px"
               @keyup.enter.native="historicalData"
             />天
-            <el-button type="info" class="fr" @click="historicalData">确认</el-button>
-            <el-button slot="reference" type="primary" @click="visibleTime = !visibleTime">历史数据分发</el-button>
+            <el-button type="info" class="fr" @click="historicalData"
+              >确认</el-button
+            >
+            <!-- <el-button
+              slot="reference"
+              type="primary"
+              @click="visibleTime = !visibleTime"
+              >历史数据分发</el-button
+            > -->
           </el-popover>
         </el-form-item>
       </el-form>
-    </div>
-    <div class="app-table">
-      <div class="table-title">
-        <div class="fl">全量目标管理</div>
-        <el-button type="primary" @click="addQuanIndex">新增</el-button>
-        <el-button v-if="userInfo.deptId === '0'" type="primary" @click="ImportKeyword">补充关键词</el-button>
-        <el-button type="primary" @click="ImportFiles">导入文件</el-button>
-        <el-button type="primary" @click="ImportModle">模板下载</el-button>
-        <el-button type="primary" :loading="exportLoad" @click="exportFiles">{{ exportName }}</el-button>
-      </div>
-      <el-table v-loading="loading" :data="quanWordList" class="app-table-list" border>
-        <el-table-column label="序号" type="index" width="50" />
-        <el-table-column prop="companyName" label="目标名称" />
-        <el-table-column label="目标类型">
-          <template slot-scope="scope">
-            <!-- {{ scope.row.companyTypeNames }} -->
-            <span v-for="(item, index) in scope.row.companyTypeNames" :key="index">
-              {{ item }}
-              <span
-                v-if="!!item === true && index < scope.row.companyTypeNames.length-1"
-              >|</span>
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="新增时间">
-          <template
-            slot-scope="scope"
-          >{{ scope.row.createTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</template>
-        </el-table-column>
-        <el-table-column prop="remark" label="备注" />
-        <el-table-column label="选择" width="250">
-          <template slot-scope="scope">
-            <el-button
-              v-if="userInfo.deptId === '0'"
-              type="success"
-              size="small"
-              @click="handleWordKey(scope.row)"
-            >关键词</el-button>
-            <el-button
-              v-if="userInfo.deptId === '0'"
-              type="primary"
-              size="small"
-              @click="handleAddOrUpdate(scope.row)"
-            >修改</el-button>
-            <el-button type="danger" size="small" @click="handleDelete([scope.row.companyId])">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          :current-page="queryForm.pageNo"
-          :page-sizes="[5, 10, 20, 30]"
-          :page-size="queryForm.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
-    <!-- 新增与修改对话框 -->
+    </el-card>
+    <!-- 全量目标管理 -->
+    <list-table ref="listTable" :options="tableData" @command="listCommand" />
+    <!-- 新增与编辑对话框 -->
     <el-dialog
       :close-on-click-modal="false"
       title="目标信息"
@@ -128,16 +80,23 @@
               v-for="(item, index) in options"
               :key="index"
               :label="item.companyTypeId"
-            >{{ item.companyTypeName }}</el-checkbox>
+              >{{ item.companyTypeName }}</el-checkbox
+            >
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="备注：" prop="remark">
-          <el-input v-model.trim="addRuleForm.remark" type="textarea" autosize />
+          <el-input
+            v-model.trim="addRuleForm.remark"
+            type="textarea"
+            autosize
+          />
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="clearDialog">取 消</el-button>
-        <el-button type="primary" :loading="loadAdd" @click="addQuanIndexFrom">确 定</el-button>
+        <el-button type="primary" :loading="loadAdd" @click="addQuanIndexFrom"
+          >确 定</el-button
+        >
       </span>
     </el-dialog>
     <!-- 关键词 -->
@@ -164,7 +123,7 @@
             @change="queryKeyIndex"
           >
             <el-option
-              v-for="(item,index) in keywordTypeOpts"
+              v-for="(item, index) in keywordTypeOpts"
               :key="index"
               :label="item.keyTypeName"
               :value="item.keyType"
@@ -180,23 +139,45 @@
           <div class="fl">关键词列表</div>
           <el-button type="primary" @click="addKeyIndex">新增</el-button>
         </div>
-        <el-table v-loading="loadKey" :data="keyWordTable" border stripe class="app-table-list">
+        <el-table
+          v-loading="loadKey"
+          :data="keyWordTable"
+          border
+          stripe
+          class="app-table-list"
+        >
           <el-table-column label="序号" type="index" width="50" />
           <el-table-column label="关键词" prop="keyword" />
           <el-table-column label="关键词类型" prop="keywordTypeName" />
           <el-table-column label="是否校验">
             <template slot-scope="scope">
-              <el-tag v-if="scope.row.isValid == 1" type="success" effect="dark">是</el-tag>
-              <el-tag v-if="scope.row.isValid == 0" type="warning" effect="dark">否</el-tag>
+              <el-tag v-if="scope.row.isValid == 1" type="success" effect="dark"
+                >是</el-tag
+              >
+              <el-tag v-if="scope.row.isValid == 0" type="warning" effect="dark"
+                >否</el-tag
+              >
             </template>
           </el-table-column>
           <el-table-column label="关联度" prop="relatedIndex" />
           <el-table-column label="置信度" prop="beliefIndex" />
           <el-table-column label="是否确认">
             <template slot-scope="scope">
-              <el-tag v-if="scope.row.isAffirm == 0" type="warning" effect="dark">否</el-tag>
-              <el-tag v-if="scope.row.isAffirm == 1" type="success" effect="dark">正确</el-tag>
-              <el-tag v-if="scope.row.isAffirm == 2" type="danger" effect="dark">错误</el-tag>
+              <el-tag
+                v-if="scope.row.isAffirm == 0"
+                type="warning"
+                effect="dark"
+                >否</el-tag
+              >
+              <el-tag
+                v-if="scope.row.isAffirm == 1"
+                type="success"
+                effect="dark"
+                >正确</el-tag
+              >
+              <el-tag v-if="scope.row.isAffirm == 2" type="danger" effect="dark"
+                >错误</el-tag
+              >
             </template>
           </el-table-column>
           <el-table-column label="备注" prop="remark" />
@@ -205,13 +186,19 @@
               <el-button
                 type="primary"
                 size="small"
-                @click="handleAffirm(scope.$index,scope.row.companyKeywordId, 1)"
-              >正确</el-button>
+                @click="
+                  handleAffirm(scope.$index, scope.row.companyKeywordId, 1)
+                "
+                >正确</el-button
+              >
               <el-button
                 type="danger"
                 size="small"
-                @click="handleAffirm(scope.$index,scope.row.companyKeywordId, 2)"
-              >错误</el-button>
+                @click="
+                  handleAffirm(scope.$index, scope.row.companyKeywordId, 2)
+                "
+                >错误</el-button
+              >
             </template>
           </el-table-column>
         </el-table>
@@ -247,7 +234,7 @@
         <el-form-item label="关键词类型：" prop="keywordType">
           <el-select v-model="addKeyRuleForm.keywordType" placeholder="请选择">
             <el-option
-              v-for="(item,index) in keywordTypeOpts"
+              v-for="(item, index) in keywordTypeOpts"
               :key="index"
               :label="item.keyTypeName"
               :value="item.keyType"
@@ -255,7 +242,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="备注：" prop="remark">
-          <el-input v-model.trim="addKeyRuleForm.remark" type="textarea" autosize />
+          <el-input
+            v-model.trim="addKeyRuleForm.remark"
+            type="textarea"
+            autosize
+          />
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -274,6 +265,8 @@
 </template>
 
 <script>
+import listTable from '@/components/table/listTable'
+import { parseTime } from '@/utils'
 import { page } from '@/api/enterprise/enterpriseType'
 import {
   confcompanyList,
@@ -289,7 +282,7 @@ import {
   // selectUploadInfoByType,
   selectExcelIsExist,
   downloadExcel,
-  informAICompanyAdd
+  informAICompanyAdd,
 } from '@/api/enterprise/enterpriseTarget'
 import UploadFile from '@/components/Upload/UploadFile'
 import { confcompany, uploadKeyWords } from '@/utils/url'
@@ -297,9 +290,99 @@ import { DomnLoadFile, UplodLoadFile } from '@/utils/exportFiles'
 import Autocomplete from '@/views/configuration/public_sentiment/compoments/autocomplete'
 export default {
   name: 'EnterpriseTarget',
-  components: { UploadFile, Autocomplete },
+  components: { UploadFile, Autocomplete, listTable },
   data() {
     return {
+      tableData: {
+        title: '全量目标管理',
+        listBtns: [
+          {
+            label: '新增',
+            commandName: 'addQuanIndex',
+            type: 'primary',
+          },
+          {
+            label: '补充关键词',
+            commandName: 'ImportKeyword',
+            type: '',
+          },
+          {
+            label: '导入文件',
+            commandName: 'ImportFiles',
+            type: '',
+          },
+          {
+            label: '模板下载',
+            commandName: 'ImportModle',
+            type: '',
+          },
+        ],
+        listApi: {
+          serviceFN: confcompanyList, // 获取表格的查询接口
+          params: {},
+        },
+        // multipleTable: true, // 是否显示复选框
+        index: {
+          // 序号配置项
+          num: true, // 是否显示序号
+          width: 60,
+        },
+        header: [
+          {
+            label: '目标名称', // 表头名称
+            propName: 'companyName', // 查询返回的字段名
+          },
+          {
+            label: '目标类型',
+            propName: 'companyTypeNames',
+            formatter: (value, row) => {
+              let text = ''
+              value.forEach((val, index) => {
+                if (index < value.length - 1) {
+                  text = text + val + ' | '
+                } else {
+                  text = text + val
+                }
+              })
+              return text
+            },
+          },
+          {
+            label: '新增时间',
+            propName: 'createTime',
+            formatter: (value, row) => {
+              // 格式化当前表格数据    参数value 为当前列的值  row为当前行数据
+              const date = new Date(value)
+              return parseTime(date)
+            },
+          },
+          {
+            label: '备注',
+            propName: 'remark',
+          },
+          {
+            label: '操作',
+            btns: [
+              {
+                label: '关键词',
+                commandName: 'handleWordKey',
+                type: 'success',
+              },
+              {
+                label: '编辑',
+                commandName: 'handleAddOrUpdate',
+                type: 'primary',
+              },
+              {
+                label: '删除',
+                commandName: 'handleDelete',
+                type: 'danger',
+              },
+            ],
+            btnGroups: false,
+          },
+        ],
+      },
       loadAdd: false,
       value: true,
       loading: true,
@@ -318,83 +401,83 @@ export default {
       keywordTypeOpts: [
         {
           keyType: 'abb',
-          keyTypeName: '简称'
+          keyTypeName: '简称',
         },
         {
           keyType: 'people',
-          keyTypeName: '高管 '
+          keyTypeName: '高管 ',
         },
         {
           keyType: 'product',
-          keyTypeName: '产品'
+          keyTypeName: '产品',
         },
         {
           keyType: 'stock',
-          keyTypeName: '股票代码'
+          keyTypeName: '股票代码',
         },
         {
           keyType: 'region',
-          keyTypeName: '区域'
+          keyTypeName: '区域',
         },
         {
           keyType: ' key',
-          keyTypeName: '关键词'
-        }
+          keyTypeName: '关键词',
+        },
       ],
       keyWordTable: [],
       queryForm: {
         pageNo: 1,
         pageSize: 10,
         companyName: '',
-        companyTypeId: ''
+        companyTypeId: '',
       },
       queryKey: {
         pageNo: 1,
         pageSize: 10,
         companyId: '',
         keyword: '',
-        keywordType: ''
+        keywordType: '',
       },
       addRuleForm: {
         companyName: '',
         companyTypeIds: [],
-        remark: ''
+        remark: '',
       },
       addKeyRuleForm: {
         companyId: '',
         keywordType: '',
         keyword: '',
-        remark: ''
+        remark: '',
       },
       // 新增验证规则
       addRules: {
         companyTypeIds: {
           required: true,
           message: '请选择目标类型',
-          trigger: 'change'
+          trigger: 'change',
         },
         companyName: {
           required: true,
           message: '目标名称',
-          trigger: 'blur'
-        }
+          trigger: 'blur',
+        },
       },
       addKeyRule: {
         keywordType: {
           required: true,
           message: '请选择关键词类型',
-          trigger: 'change'
+          trigger: 'change',
         },
         keyword: {
           required: true,
           message: '请输入关键词',
-          trigger: 'blur'
-        }
+          trigger: 'blur',
+        },
       },
       DialogVisible: false,
       action: '',
       imports: '',
-      exportName: '导出'
+      exportName: '导出',
     }
   },
   created() {
@@ -425,12 +508,15 @@ export default {
         this.options = res.rows
       })
     },
+    listCommand(command, row, index) {
+      if (command && this[command]) {
+        this[command](row, index)
+      }
+    },
     // 获取页面数据
     getQuanIndex() {
-      confcompanyList(this.queryForm).then((res) => {
-        this.quanWordList = res.rows
-        this.total = res.total
-        this.loading = false
+      this.$nextTick(() => {
+        this.$refs['listTable'].search(this.queryForm)
       })
     },
     // 查询
@@ -440,7 +526,7 @@ export default {
       this.getQuanIndex()
     },
     RefreshData(companyName) {
-      companyName ? this.queryForm.companyName = companyName : ''
+      companyName ? (this.queryForm.companyName = companyName) : ''
       this.queryQuanIndex()
     },
     // 关键词查询
@@ -453,14 +539,14 @@ export default {
       this.isEdit = false
       this.addDialogVisible = true
     },
-    // 修改
+    // 编辑
     handleAddOrUpdate(row) {
       this.isEdit = true
       this.addRuleForm = row
       this.addDialogVisible = true
     },
     addQuanIndexFrom() {
-      this.$refs.addRuleForm.validate(async(valid) => {
+      this.$refs.addRuleForm.validate(async (valid) => {
         if (!valid) return
         this.loadAdd = true
         // 成功了调用接口
@@ -473,8 +559,10 @@ export default {
         if (res.code === 200) {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
+          this.queryForm.companyTypeId = ''
+          this.queryForm.companyName = ''
           this.loadAdd = false
           // 刷新列表
           this.getQuanIndex()
@@ -482,7 +570,7 @@ export default {
           this.$message({
             type: 'error',
             dangerouslyUseHTMLString: true,
-            message: res.data
+            message: res.data,
           })
         }
         this.clearDialog()
@@ -513,13 +601,15 @@ export default {
       this.addKeyRuleForm.companyId = this.queryKey.companyId
     },
     addKeyIndexFrom() {
-      this.$refs.addKeyRuleForm.validate(async(valid) => {
+      this.$refs.addKeyRuleForm.validate(async (valid) => {
         if (!valid) return
         companykeywordSave(this.addKeyRuleForm).then((res) => {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
+          this.queryKey.keyword = ''
+          this.queryKey.keywordType = ''
           this.getCompanyKeywordList()
           this.clearDialog()
         })
@@ -530,7 +620,7 @@ export default {
         this.addRuleForm = {
           companyName: '',
           companyTypeIds: [],
-          remark: ''
+          remark: '',
         }
         this.$refs.addRuleForm.clearValidate()
       }
@@ -539,7 +629,7 @@ export default {
           companyId: '',
           keywordType: '',
           keyword: '',
-          remark: ''
+          remark: '',
         }
         this.$refs.addKeyRuleForm.clearValidate()
       }
@@ -569,16 +659,17 @@ export default {
     },
     // 删除
     handleDelete(ids) {
+      let id = [ids.companyId]
       this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
       })
         .then(() => {
-          handleDelete(ids).then((res) => {
+          handleDelete(id).then((res) => {
             this.$message({
               type: 'success',
-              message: '删除成功!'
+              message: '删除成功!',
             })
             this.getQuanIndex()
           })
@@ -586,7 +677,7 @@ export default {
         .catch(() => {
           this.$message({
             type: 'info',
-            message: '已取消删除'
+            message: '已取消删除',
           })
           this.loading = false
         })
@@ -597,83 +688,55 @@ export default {
       const fname = `目标文档模板`
       DomnLoadFile(File, fname)
     },
-    exportFiles() {
-      this.exportLoad = true
-      domnLoadFile().then((res) => {
-        var date = new Date().getTime() + 180000
-        const fname = `目标文档`
-        this.exportName = '生成中...'
-        var time = null
-        time = setInterval(() => {
-          if (new Date().getTime() >= date) {
-            this.$message.error('表格生成失败！')
-            clearInterval(time)
-            time = null
-            this.exportName = '导出'
-            this.exportLoad = false
-            return
-          }
-          selectExcelIsExist(res.data).then((val) => {
-            if (val.code && val.code === 200) {
-              clearInterval(time)
-              time = null
-              const file = downloadExcel(res.data)
-              UplodLoadFile(file, fname)
-              this.exportName = '导出'
-              this.exportLoad = false
-            }
-          })
-        }, 5000)
-      })
-    },
     historicalData() {
       informAICompanyAdd(this.timeday)
         .then((res) => {
           this.$message({
             type: 'success',
-            message: '操作成功'
+            message: '操作成功',
           })
         })
         .catch((req) => {
           this.$message({
             type: 'error',
-            message: '操作失败'
+            message: '操作失败',
           })
         })
       this.visibleTime = false
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  .app-tabs {
-    margin-top: 20px;
+.app-tabs {
+  /deep/.el-form-item {
+    margin-bottom: 0;
   }
-  .table-title {
-    height: 36px;
-    line-height: 36px;
-    font-weight: 700;
+}
+
+.table-title {
+  height: 36px;
+  line-height: 36px;
+  font-weight: 700;
+}
+.app-table {
+  border: 1px solid #ccc;
+  margin-top: 20px;
+  padding: 10px;
+  text-align: right;
+  .app-table-list {
+    width: 100%;
+    margin: 10px 0;
   }
-  .app-table {
-    border: 1px solid #ccc;
-    margin-top: 20px;
-    padding: 10px;
-    text-align: right;
-    .app-table-list {
-      width: 100%;
-      margin: 10px 0;
-    }
-  }
-  .el-progress {
-    width: 150px;
-    position: fixed;
-    top: 155px;
-    right: 40px;
-  }
-  .pagination {
-    text-align: right;
-  }
+}
+.el-progress {
+  width: 150px;
+  position: fixed;
+  top: 155px;
+  right: 40px;
+}
+.pagination {
+  text-align: right;
 }
 </style>

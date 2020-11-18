@@ -1,8 +1,8 @@
 <template>
-  <div class="dashboard-container">
+  <div class="dashboard_main">
     <panel-group ref="top" :homepage="homePage" />
     <!-- <component :is="currentRole" /> -->
-    <div class="box-card clearfix">
+    <div class="data_box">
       <!-- 舆情脉络图 -->
       <!-- <vue-draggable-resizable-gorkys
         :w="900"
@@ -13,11 +13,11 @@
         class-name="my-class"
         style="transition: none; will-change: transform;"
       >-->
-      <el-card class="app-main fl">
+      <el-card class="app-main">
         <div slot="header" class="clearfix">
           <span>
             <span class="el-icon-tickets">
-              预警 :
+              预警
               <!-- 部门用户 -->
               <span v-if="userInfo.orgId !== '0' && userInfo.deptId !== '0'">
                 <span v-if="userInfo.isAdmin">{{ userInfo.name }}</span>
@@ -60,7 +60,8 @@
                 :key="item.id"
                 :label="item.deptName"
                 :value="item.id"
-              >{{ item.deptName }}</el-option>
+                >{{ item.deptName }}</el-option
+              >
             </el-select>
           </span>
           <el-button
@@ -77,7 +78,9 @@
           <div
             v-if="distributeRecordFrom && distributeRecordFrom.length === 0"
             style="margin-top: 20px"
-          >暂无数据</div>
+          >
+            暂无数据
+          </div>
           <div class="time_line">
             <timeline
               v-if="distributeRecordFrom.length !== 0"
@@ -88,7 +91,7 @@
                 <div v-for="(item, index) in distributeRecordFrom" :key="index">
                   <timeline-item bg-color="#3488d6">
                     <div class="time_style">{{ item.releaseTimeStr }}</div>
-                    <div style="display: inline-block; width:95%">
+                    <div style="display: inline-block; width: 95%">
                       <a href="javascript:;" @click="detailsPage(item.id)">
                         <h3 class="pic">
                           <el-tag
@@ -96,13 +99,15 @@
                             effect="dark"
                             type="success"
                             size="mini"
-                          >正</el-tag>
+                            >正</el-tag
+                          >
                           <el-tag
                             v-if="item.emotionType === -1"
                             effect="dark"
                             type="danger"
                             size="mini"
-                          >负</el-tag>
+                            >负</el-tag
+                          >
                           <span>{{ index + 1 }}.</span>
                           <span>{{ item.title }}</span>
                         </h3>
@@ -113,25 +118,40 @@
                       </p>
                       <p class="content">
                         <b v-if="item.emotionType === -1">预警级别：</b>
-                        <span v-if="item.emotionType === -1">{{ item.contentGrade }}</span>
-                        <b :style="item.emotionType === -1 ? 'margin-left: 20px;' : ''">预警类型：</b>
-                        <span v-for="(val,j) in item.signalNames" :key="j">{{ val }}</span>
-                        <b style="margin-left: 20px;">目标公司：</b>
+                        <span v-if="item.emotionType === -1">{{
+                          item.contentGrade
+                        }}</span>
+                        <b
+                          :style="
+                            item.emotionType === -1 ? 'margin-left: 20px;' : ''
+                          "
+                          >预警类型：</b
+                        >
+                        <span v-for="(val, j) in item.signalNames" :key="j">{{
+                          val
+                        }}</span>
+                        <b style="margin-left: 20px">目标公司：</b>
                         <span>{{ item.companyName }}</span>
                       </p>
                       <p class="content">
                         <b>事件标签：</b>
-                        <span v-for="(val,j) in item.labelNames" :key="j">{{ val }}</span>
+                        <span v-for="(val, j) in item.labelNames" :key="j">{{
+                          val
+                        }}</span>
                       </p>
                       <p class="content">
-                        <b>分析时间：</b>
-                        <span>{{ Number(item.analysisTime) | parseTime() }}</span>
-                        <b style="margin-left: 20px;">数据类型：</b>
+                        <!-- <b>分析时间：</b>
+                        <span>{{ Number(item.analysisTime) | parseTime() }}</span> -->
+                        <b>数据类型：</b>
                         <span>{{ item.sourceTypeName }}</span>
-                        <b style="margin-left: 20px;">来源：</b>
-                        <span>{{ item.source === '' ? '未知' : item.source }}</span>
-                        <b style="margin-left: 20px;">作者：</b>
-                        <span>{{ item.nickname === '' ? '未知' : item.nickname }}</span>
+                        <b style="margin-left: 20px">来源：</b>
+                        <span>{{
+                          item.source === '' ? '未知' : item.source
+                        }}</span>
+                        <b style="margin-left: 20px">作者：</b>
+                        <span>{{
+                          item.nickname === '' ? '未知' : item.nickname
+                        }}</span>
                       </p>
                     </div>
                   </timeline-item>
@@ -152,7 +172,7 @@
         class-name="my-class"
         style="transition: none; will-change: transform;"
       >-->
-      <el-card v-loading="loadEcharts" class="app-main fr">
+      <el-card v-loading="loadEcharts" class="app-main">
         <div id="myChart1" ref="charts" />
         <div id="myChart2" ref="chart" />
       </el-card>
@@ -189,7 +209,7 @@ import {
   system,
   dataSourceTypeBarChart,
   dataSourceTypePie,
-  queryAllDept
+  queryAllDept,
 } from '@/api/dashboard'
 import { distributeRecord } from '@/api/public_sentiment/alert_public_sentiment'
 import { confCompanyCombinationSubscribe } from '@/api/enterprise/enterpriseTotal'
@@ -221,7 +241,7 @@ export default {
         pageNo: 1,
         pageSize: 10,
         deduplicate: false,
-        analysisTimeSort: false
+        analysisTimeSort: false,
       },
       homePage: {},
       distributeRecordFrom: '',
@@ -229,7 +249,7 @@ export default {
       solutionForm: {
         deptId: '0',
         pageNo: 1,
-        pageSize: 100
+        pageSize: 100,
       },
       dialogVisible: false,
       total: 0,
@@ -237,26 +257,27 @@ export default {
       defaultProps: {
         children: 'deptDtos',
         label: 'name',
-        value: 'id'
+        value: 'id',
       },
       selectedOptions: [],
       selectedOption: '',
       deptOptions: [],
       check: [],
-      optionsCompanyCombSub: []
+      optionsCompanyCombSub: [],
     }
   },
   computed: {
-    ...mapGetters(['isDot'])
+    ...mapGetters(['isDot']),
   },
   watch: {
-    isDot: { // 深度监听，可监听到对象、数组的变化
+    isDot: {
+      // 深度监听，可监听到对象、数组的变化
       handler(newV, oldV) {
         if (this.isDot) {
           this.distributeRecord()
         }
-      }
-    }
+      },
+    },
   },
   created() {
     // 获取管理员身份
@@ -285,7 +306,7 @@ export default {
         })
         this.selectedOptions = [
           this.dataFollow[0].id,
-          this.dataFollow[0].deptDtos[0].id
+          this.dataFollow[0].deptDtos[0].id,
         ]
         this.queryForm.orgId = this.dataFollow[0].id
         this.queryForm.deptId = this.dataFollow[0].deptDtos[0].id
@@ -323,7 +344,7 @@ export default {
     detailsPage(val) {
       this.$router.push({
         path: '/configuration/public_sentiment/details_page/alert_public_page',
-        query: { id: val }
+        query: { id: val },
       })
     },
     distributeRecord() {
@@ -352,10 +373,10 @@ export default {
       this.distributeRecordFrom.forEach((itemParent, index) => {
         if (itemParent.abbs) {
           itemParent.abbs.forEach((item) => {
-            const pattern = /[`~!@#$^&*()=|{}':;',\\\[\]\.<>\/?~！@#￥……&*（）——|{}【】'；：""'。，、？\s]/g
+            const pattern = /[`~!@#$^&*()=|{}':;',\\\[\]\.<>\/?~！@#￥……&*（）——|{}【】'；：""'。，、？\s]/
             if (item === '公司') return
             const name = item.replace(pattern, '')
-            const replaceReg = new RegExp(name, 'g')
+            const replaceReg = new RegExp(item, 'g')
             itemParent.abstracts = itemParent.abstracts.replace(
               replaceReg,
               `<span style="color: #0984ff">${item}</span>`
@@ -383,7 +404,7 @@ export default {
     getchart() {
       const TypeBarChart = {
         deptId: this.queryForm.deptId,
-        orgId: this.queryForm.orgId
+        orgId: this.queryForm.orgId,
       }
       dataSourceTypeBarChart(TypeBarChart).then((res) => {
         this.loadEcharts = false
@@ -391,62 +412,74 @@ export default {
         const option = {
           color: ['#13ce66', '#ff4949', '#666', '#409EFF'],
           title: {
-            text: '预警数量（当月）'
+            text: '预警数量（当月）',
           },
           barMaxWidth: 60,
           tooltip: {
             trigger: 'axis',
             axisPointer: {
-              type: 'shadow'
-            }
+              type: 'shadow',
+            },
           },
           legend: {
-            left: 'right',
-            data: ['正面', '负面', '分发总数']
+            top: '20px',
+            left: 'center',
+            data: ['正面', '负面', '分发总数'],
+          },
+          toolbox: {
+            show: true,
+            feature: {
+              restore: {
+                show: true,
+              },
+              saveAsImage: {
+                show: true,
+              },
+            },
           },
           grid: {
             left: '3%',
             right: '4%',
             bottom: '3%',
-            containLabel: true
+            containLabel: true,
           },
           xAxis: {
             type: 'category',
-            data: res.data.categories
+            data: res.data.categories,
           },
           yAxis: {
-            type: 'value'
+            type: 'value',
           },
           series: [
             {
               name: '正面',
               type: 'bar',
               stack: '总量',
-              data: res.data.positiveCounts
+              data: res.data.positiveCounts,
             },
             {
               name: '负面',
               type: 'bar',
               stack: '总量',
-              data: res.data.negativeCounts
+              data: res.data.negativeCounts,
             },
             {
               name: '总量',
               type: 'scatter',
               symbolSize: 0.0001,
               itemStyle: {
-                color: 'transparent'
+                color: 'transparent',
               },
               label: {
                 show: true,
                 color: '#000',
                 fontSize: 16,
                 position: 'top',
-                formatter: '{c}'
+                formatter: '{c}',
               },
-              data: res.data.sumCounts
-            }
-          ]
+              data: res.data.sumCounts,
+            },
+          ],
         }
         Downline(dom, option)
         this.disabled = false
@@ -461,28 +494,28 @@ export default {
         const options = {
           title: {
             text: '数据总数（当月）',
-            left: 'center'
+            left: 'center',
           },
           tooltip: {
             trigger: 'item',
-            formatter: '{a} <br/>{b}: {c} ({d}%)'
+            formatter: '{a} <br/>{b}: {c} ({d}%)',
           },
           legend: {
             type: 'scroll',
             orient: 'vertical',
             left: 10,
-            data: legendData
+            data: legendData,
           },
           toolbox: {
             show: true,
             feature: {
               restore: {
-                show: true
+                show: true,
               },
               saveAsImage: {
-                show: true
-              }
-            }
+                show: true,
+              },
+            },
           },
           series: [
             {
@@ -493,24 +526,24 @@ export default {
               label: {
                 normal: {
                   show: false,
-                  position: 'center'
+                  position: 'center',
                 },
                 emphasis: {
                   show: true,
                   textStyle: {
                     fontSize: '30',
-                    fontWeight: 'bold'
-                  }
-                }
+                    fontWeight: 'bold',
+                  },
+                },
               },
               labelLine: {
                 normal: {
-                  show: false
-                }
+                  show: false,
+                },
               },
-              data: ress.data
-            }
-          ]
+              data: ress.data,
+            },
+          ],
         }
         Downline(dom, options)
       })
@@ -552,11 +585,21 @@ export default {
     queryQuanIndex() {
       this.loading = true
       this.queryForm.pageNo = 1
-    }
-  }
+    },
+  },
 }
 </script>
 <style lang="scss" scoped>
+.dashboard_main {
+  padding: 0.15rem;
+}
+/deep/.el-card__body {
+  padding: 0.1rem;
+}
+/deep/.el-card__header {
+  padding: 0.1rem;
+  padding-bottom: 0.02rem;
+}
 .my-class {
   display: inline-block;
   width: 4.5rem;
@@ -565,50 +608,52 @@ export default {
   border: 0;
   margin-right: 20px;
 }
-.box-card {
-  margin: 2%;
-  margin-bottom: 0;
+.data_box {
+  display: flex;
+  justify-content: space-between;
   box-sizing: border-box;
-}
-.fl {
-  float: left;
-}
-.fr {
-  float: right;
+  margin: 0.1rem 0;
 }
 .pic {
   margin: 0;
-  line-height: 0.13rem;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  .el-tag {
+    margin-right: 0.05rem;
+  }
 }
 .el-icon-tickets {
-  font-size: 0.09rem;
-  line-height: 0.19rem;
+  font-size: 0.18rem;
+  line-height: 20px;
+  margin-right: 0.1rem;
+  color: #409eff;
 }
 .time_line {
-  height: 620px;
+  height: 664px;
   overflow: auto;
 }
+.app-main:first-child {
+  margin-left: 0;
+}
 .app-main {
+  flex: 12;
   display: inline-block;
-  // height: 100%;
-  // width: 100%;
-  width: 49%;
   height: 738px;
-  margin-right: 0;
+  margin-left: 0.1rem;
   margin-bottom: 20px;
   text-align: left;
-  .el-icon-tickets,
-  .el-icon-date {
-    color: #409eff;
-  }
   .time_style {
     display: inline-block;
     position: absolute;
-    left: -0.75rem;
-    line-height: 0.09rem;
-    width: 0.5rem;
+    left: -1.6rem;
+    line-height: 20px;
+    width: 1rem;
     height: 20px;
-    font-size: 0.06rem;
+    font-size: 0.14rem;
     text-align: right;
     color: #4ba5fa;
   }
@@ -620,8 +665,8 @@ export default {
     float: right;
   }
   .content {
-    font-size: 0.07rem;
-    line-height: 0.1rem;
+    font-size: 0.12rem;
+    line-height: 20px;
     margin: 5px 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -631,26 +676,12 @@ export default {
   }
 }
 #myChart1 {
-  width: 3.55rem;
+  width: 100%;
   height: 310px;
   margin-bottom: 20px;
 }
 #myChart2 {
   height: 375px;
-  width: 3.55rem;
-}
-@media screen and (max-width: 1440px) {
-  .app-main {
-    .content {
-      line-height: 0.2rem;
-    }
-    .time_style {
-      display: block;
-      text-align: left;
-      position: relative;
-      width: 100%;
-      padding-left: 0.7rem;
-    }
-  }
+  width: 100%;
 }
 </style>

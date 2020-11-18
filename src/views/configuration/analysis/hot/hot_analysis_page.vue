@@ -2,15 +2,27 @@
   <div class="app-container">
     <!-- 搜索查询 -->
     <div class="app-tabs">
-      <el-popover v-model="visibleTime" placement="bottom-start" trigger="click">
+      <el-popover
+        v-model="visibleTime"
+        placement="bottom-start"
+        trigger="click"
+      >
         <div class="tab-body">
           <div>
-            <el-radio v-model="radio" label="0" @change="queryFrom">全部</el-radio>
-            <el-radio v-model="radio" label="1" @change="queryFrom">当天</el-radio>
-            <el-radio v-model="radio" label="2" @change="queryFrom">近3天</el-radio>
-            <el-radio v-model="radio" label="3" @change="queryFrom">近7天</el-radio>
+            <el-radio v-model="radio" label="0" @change="queryFrom"
+              >全部</el-radio
+            >
+            <el-radio v-model="radio" label="1" @change="queryFrom"
+              >当天</el-radio
+            >
+            <el-radio v-model="radio" label="2" @change="queryFrom"
+              >近3天</el-radio
+            >
+            <el-radio v-model="radio" label="3" @change="queryFrom"
+              >近7天</el-radio
+            >
             <el-radio v-model="radio" label="4">自定义时间</el-radio>
-            <span v-if="radio==='4'" style="margin-top: 20px">
+            <span v-if="radio === '4'" style="margin-top: 20px">
               <el-date-picker
                 v-model="time"
                 type="daterange"
@@ -31,28 +43,43 @@
           <span>|</span>
         </el-button>
       </el-popover>
-      <el-popover v-model="visibleData" placement="bottom-start" trigger="click">
+      <el-popover
+        v-model="visibleData"
+        placement="bottom-start"
+        trigger="click"
+      >
         <div>
-          <el-radio v-model="dataType" label="0" @change="queryData">全部</el-radio>
+          <el-radio v-model="dataType" label="0" @change="queryData"
+            >全部</el-radio
+          >
           <el-radio
             v-for="item in optionsSource"
             :key="item.sourceTypeId"
             v-model="dataType"
             :label="item.typeCode"
             @change="queryData(item.typeName)"
-          >{{ item.typeName }}</el-radio>
+            >{{ item.typeName }}</el-radio
+          >
         </div>
         <el-button slot="reference" type="text">
-          <b class="demonstration">数据源类型</b>
+          <b class="demonstration">数据类型</b>
           <span>{{ dataName }}</span>
           <i class="el-icon-arrow-down el-icon--right" />
           <span>|</span>
         </el-button>
       </el-popover>
-      <el-popover v-model="visibleRepeat" placement="bottom-start" trigger="click">
+      <el-popover
+        v-model="visibleRepeat"
+        placement="bottom-start"
+        trigger="click"
+      >
         <div>
-          <el-radio v-model="removal" label="0" @change="queryFrom">重复</el-radio>
-          <el-radio v-model="removal" label="1" @change="queryFrom">不重复</el-radio>
+          <el-radio v-model="removal" label="0" @change="queryFrom"
+            >重复</el-radio
+          >
+          <el-radio v-model="removal" label="1" @change="queryFrom"
+            >不重复</el-radio
+          >
         </div>
         <el-button slot="reference" type="text">
           <b class="demonstration">重复信息</b>
@@ -64,18 +91,19 @@
     <!-- 主体 -->
     <div v-loading="loading">
       <div class="app-title">
-        <i class="el-icon-set-up icon-bell" />
-        <span class="title">事件概述</span>
+        <svg-icon icon-class="shuxian" class="icon-bell" />
+        <span class="title_echart">事件概述</span>
       </div>
       <div class="topic" v-html="distributeRecordFrom.introduction" />
       <div class="app-title">
-        <i class="el-icon-s-operation icon-bell" />
-        <span class="title">事件脉络</span>
+        <svg-icon icon-class="shuxian" class="icon-bell" />
+        <span class="title_echart">事件脉络</span>
       </div>
-      <div class="body-title">
-        <span>开始时间</span>
-      </div>
-      <div v-for="(item, index) in detailsRecordFrom" :key="index" class="app-body">
+      <div
+        v-for="(item, index) in detailsRecordFrom"
+        :key="index"
+        class="app-body"
+      >
         <timeline timeline-theme="#ccc" timeline-bg="#998">
           <template>
             <div>
@@ -83,18 +111,39 @@
                 <h3 style="margin: 0">{{ item.topicDetailName }}</h3>
               </timeline-title>
               <timeline-item
-                v-for="(it, i) in item.hotTopicRouteEntities.slice(0,sliceLength[index])"
+                v-for="(it, i) in item.hotTopicRouteEntities.slice(
+                  0,
+                  sliceLength[index]
+                )"
                 :key="i"
                 bg-color="#3488d6"
               >
-                <span class="time_style">{{ Number(it.releaseTime) | parseTime() }}</span>
-                <div style="display: inline-block; width:95%">
-                  <el-link :href="it.url" target="view_window" :underline="false">
+                <span class="time_style">{{
+                  Number(it.releaseTime) | parseTime()
+                }}</span>
+                <div style="display: inline-block; width: 95%">
+                  <el-link
+                    :href="it.url"
+                    target="view_window"
+                    :underline="false"
+                  >
                     <h4 style="margin: 3px 0">
-                      <el-tag v-if="it.label === '中性'" size="mini">{{ it.label }}</el-tag>
-                      <el-tag v-if="it.label === '正面'" type="success" size="mini">{{ it.label }}</el-tag>
-                      <el-tag v-if="it.label === '负面'" type="danger" size="mini">{{ it.label }}</el-tag>
-                      <span style="margin-left: 10px;">{{ i + 1 }}.</span>
+                      <el-tag v-if="it.label === '中性'" size="mini">{{
+                        it.label
+                      }}</el-tag>
+                      <el-tag
+                        v-if="it.label === '正面'"
+                        type="success"
+                        size="mini"
+                        >{{ it.label }}</el-tag
+                      >
+                      <el-tag
+                        v-if="it.label === '负面'"
+                        type="danger"
+                        size="mini"
+                        >{{ it.label }}</el-tag
+                      >
+                      <span style="margin-left: 10px">{{ i + 1 }}.</span>
                       <span>{{ it.title }}</span>
                     </h4>
                   </el-link>
@@ -107,9 +156,12 @@
                     <span
                       v-for="items in optionsSource"
                       :key="items.sourceTypeId"
-                    >{{ it.dataType===items.typeCode? items.typeName:'' }}</span>
-                    <b style="margin-left: 20px;">来源：</b>
-                    <span>{{ it.source === '' ? '未知': it.source }}</span>
+                      >{{
+                        it.dataType === items.typeCode ? items.typeName : ''
+                      }}</span
+                    >
+                    <b style="margin-left: 20px">来源：</b>
+                    <span>{{ it.source === '' ? '未知' : it.source }}</span>
                   </p>
                 </div>
               </timeline-item>
@@ -117,8 +169,10 @@
                 v-if="sliceLength[index] < item.hotTopicRouteEntities.length"
                 type="primary"
                 class="loadMore"
+                size="mini"
                 @click="loadMore(item, index)"
-              >加载更多</el-button>
+                >加载更多</el-button
+              >
             </div>
           </template>
         </timeline>
@@ -126,18 +180,22 @@
     </div>
     <!--  词云图 -->
     <div>
-      <div class="app-title" style="width: 100%;">
-        <i class="el-icon-collection icon-bell" />
-        <span class="title">关键词云</span>
+      <div class="app-title">
+        <svg-icon icon-class="shuxian" class="icon-bell" />
+        <span class="title_echart">关键词云</span>
       </div>
       <div>
         <div id="word_cloud_view_id" />
         <div class="wordCloud">
-          <el-table
+          <!-- <el-table
             :data="wordCloud"
             stripe
             max-height="400"
-            :header-row-style="{fontSize: '18px',fontWeight: 700,color: '#333'}"
+            :header-row-style="{
+              fontSize: '18px',
+              fontWeight: 700,
+              color: '#333',
+            }"
           >
             <el-table-column prop="name" label="事件高频词" min-width="120">
               <template slot-scope="scope">
@@ -146,66 +204,36 @@
               </template>
             </el-table-column>
             <el-table-column prop="score" min-width="120">
-              <template slot-scope="scope">{{ scope.row.score.toFixed(2) }}</template>
+              <template slot-scope="scope">{{
+                scope.row.score.toFixed(2)
+              }}</template>
             </el-table-column>
-          </el-table>
+          </el-table> -->
         </div>
       </div>
     </div>
     <!-- 情感占比分析 -->
-    <div>
-      <div class="app-title" style="width: 99%;">
-        <i class="el-icon-pie-chart icon-bell" />
-        <span class="title">情感占比分析</span>
+    <!-- <div>
+      <div class="app-title">
+        <svg-icon icon-class="shuxian" class="icon-bell" />
+        <span class="title_echart">情感占比分析</span>
       </div>
       <div id="emotionCharts" ref="emotionCharts" />
-    </div>
-    <!-- 调性分析 -->
-    <div>
-      <div class="app-title" style="width: 99%;">
-        <i class="el-icon-aim icon-bell" />
-        <span class="title">调性分析</span>
-      </div>
-      <div class="fr">
-        <el-button size="mini" @click="annualEnquiry">年</el-button>
-        <el-popover placement="bottom" width="330" trigger="click" @after-leave="hideTrend">
-          <el-date-picker
-            v-model="monthlyValue"
-            type="monthrange"
-            range-separator="至"
-            start-placeholder="开始月份"
-            end-placeholder="结束月份"
-            format="yyyy 年 MM 月"
-            value-format="yyyy-MM"
-            @change="monthlyEnquiry"
-          />
-          <el-button slot="reference" size="mini">月</el-button>
-        </el-popover>
-        <el-popover placement="bottom" trigger="click" @after-leave="hideTrend">
-          <el-date-picker
-            v-model="dailyValue"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            format="yyyy 年 MM 月 dd 日"
-            value-format="timestamp"
-            @change="dailyEnquiry"
-          />
-          <el-button slot="reference" size="mini">日</el-button>
-        </el-popover>
-      </div>
-      <div id="tonalityCharts" ref="tonalityCharts" />
-    </div>
+    </div> -->
     <!-- 传播趋势 -->
     <div>
-      <div class="app-title" style="width: 99%;">
-        <i class="el-icon-data-line icon-bell" />
-        <span class="title">传播趋势</span>
+      <div class="app-title">
+        <svg-icon icon-class="shuxian" class="icon-bell" />
+        <span class="title_echart">传播趋势</span>
       </div>
       <div class="fr">
         <el-button size="mini" @click="annualTrend">年</el-button>
-        <el-popover placement="bottom" width="330" trigger="click" @after-leave="hideTrend">
+        <el-popover
+          placement="bottom"
+          width="330"
+          trigger="click"
+          @after-leave="hideTrend"
+        >
           <el-date-picker
             v-model="monthlyValue"
             type="monthrange"
@@ -234,14 +262,6 @@
       </div>
       <div id="trendCharts" ref="charts" />
     </div>
-    <!--  传播路径-->
-    <div>
-      <div class="app-title" style="width: 99%;">
-        <i class="el-icon-place icon-bell" />
-        <span class="title">传播路径</span>
-      </div>
-      <div id="RouteCharts" ref="RouteCharts" />
-    </div>
   </div>
 </template>
 
@@ -252,9 +272,8 @@ import {
   spreadTrend,
   details,
   keyWordsCloud,
-  spreadPath,
   emotionAnalysis,
-  tonalAnalysis
+  tonalAnalysis,
 } from '@/api/analysis/hot_analysis'
 import Timeline from '@/views/components/timeline'
 import TimelineItem from '@/views/components/timelineItem'
@@ -262,11 +281,7 @@ import TimelineTitle from '@/views/components/timelineTitle'
 import { parseTime } from '@/utils'
 // 引入基本模板
 var echarts = require('echarts/lib/echarts')
-// 引入柱状图组件
-require('echarts/lib/chart/bar')
-// 引入提示框和title组件
-require('echarts/lib/component/tooltip')
-require('echarts/lib/component/title')
+// 词云图
 require('echarts-wordcloud')
 import 'echarts/theme/macarons.js'
 import { deepClone } from '../../../../utils'
@@ -291,7 +306,7 @@ export default {
       solutionForm: {
         deptId: '0',
         pageNo: 1,
-        pageSize: 100
+        pageSize: 100,
       },
       optionsSource: [],
       distributeRecordFrom: {},
@@ -302,7 +317,7 @@ export default {
         dataType: '',
         endTime: '',
         startTime: '',
-        topicId: ''
+        topicId: '',
       },
       footer: false,
       word_cloud_view: null,
@@ -311,7 +326,7 @@ export default {
       wordCloud: [],
       sliceLength: [],
       monthlyValue: '',
-      dailyValue: ''
+      dailyValue: '',
     }
   },
   beforeCreate() {
@@ -354,7 +369,7 @@ export default {
           rotationRange: [0, 0],
           autoSize: {
             enable: true,
-            minSize: 6
+            minSize: 6,
           },
           textPadding: 0,
           // rotationStep: 45,
@@ -365,44 +380,44 @@ export default {
               fontFamily: 'sans-serif',
               fontWeight: 'bold',
               // Color can be a callback function or a color string
-              color: function() {
+              color: function () {
                 // Random color
                 return (
                   'rgb(' +
                   [
                     Math.round(Math.random() * 256),
                     Math.round(Math.random() * 256),
-                    Math.round(Math.random() * 256)
+                    Math.round(Math.random() * 256),
                   ].join(',') +
                   ')'
                 )
-              }
+              },
             },
             emphasis: {
               shadowBlur: 10,
-              shadowColor: '#333'
-            }
+              shadowColor: '#333',
+            },
           },
-          data: this.word_list
-        }
+          data: this.word_list,
+        },
       ]
 
       this.word_cloud_options = {
         tooltip: {
-          show: true
+          show: true,
         },
         toolbox: {
           show: true,
           feature: {
             restore: {
-              show: true
+              show: true,
             },
             saveAsImage: {
-              show: true
-            }
-          }
+              show: true,
+            },
+          },
         },
-        series: word_cloud_series
+        series: word_cloud_series,
       }
       this.word_cloud_view.setOption(this.word_cloud_options)
     },
@@ -425,10 +440,10 @@ export default {
     },
     distributeRecord() {
       this.loading = true
-      topicContext(this.queryForm.topicId).then(res => {
+      topicContext(this.queryForm.topicId).then((res) => {
         this.distributeRecordFrom = res.data
       })
-      details(this.queryForm).then(res => {
+      details(this.queryForm).then((res) => {
         this.detailsRecordFrom = res.data
         this.detailsRecordFrom.forEach((item, index) => {
           if (
@@ -447,213 +462,97 @@ export default {
     // 图
     getchart() {
       // 词云数据
-      keyWordsCloud(this.queryForm).then(res => {
+      keyWordsCloud(this.queryForm).then((res) => {
         this.wordCloud = res.data
-        this.word_list = res.data.map(item => {
+        this.word_list = res.data.map((item) => {
           return {
             name: item.name,
-            value: item.score
+            value: item.score,
           }
         })
         this.init_view_data()
       })
       // 传播趋势
       this.getspreadTrend(this.queryForm)
-      // 传播路径
-      spreadPath(this.queryForm).then(res => {
-        var categories = []
-        var date = []
-        res.data.data.forEach(item => {
-          item.draggable = true
-          if (item.name.substring(0, 3) === '子事件') {
-            item.category = item.name
-            date.push(item.name)
-          }
-          if (item.value) {
-            item.value = [item.value]
-          }
-          categories.push({ name: item.name })
-        })
-        res.data.links.forEach(item => {
-          if (item.value) {
-            item.symbolSize = [0, 10]
-          } else {
-            item.value = ''
-          }
-        })
-        var myChart = echarts.init(document.getElementById('RouteCharts'))
-        myChart.showLoading()
-        var option = {
-          color: [
-            '#b10505',
-            '#09189a',
-            '#2f4554',
-            '#d48265',
-            '#07a85d',
-            '#749f83',
-            '#744601',
-            '#ee6b43',
-            '#099afa',
-            '#61a0a8',
-            '#c4ccd3',
-            '#8903aa'
-          ],
-          backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [
-            {
-              offset: 0,
-              color: '#fff'
-            },
-            {
-              offset: 1,
-              color: '#fff'
-            }
-          ]),
-          title: {
-            text: '传播路径图',
-            top: 'top',
-            left: 'center'
-          },
-          tooltip: {},
-          legend: [
-            {
-              type: 'scroll',
-              orient: 'vertical',
-              left: 10,
-              top: 30,
-              tooltip: {
-                show: true
-              },
-              selectedMode: 'false',
-              data: date
-            }
-          ],
-          toolbox: {
-            show: true,
-            feature: {
-              restore: {
-                show: true
-              },
-              saveAsImage: {
-                show: true
-              }
-            }
-          },
-          animationDuration: 3000,
-          animationEasingUpdate: 'quinticInOut',
-          series: [
-            {
-              type: 'graph',
-              layout: 'force',
-              force: {
-                gravity: 0,
-                edgeLength: 60,
-                repulsion: 400
-              },
-              data: res.data.data,
-              links: res.data.links,
-              categories: categories,
-              focusNodeAdjacency: true,
-              roam: true,
-              label: {
-                normal: {
-                  show: true,
-                  position: 'top'
-                }
-              },
-              edgeSymbol: ['circle', 'arrow'],
-              edgeSymbolSize: [0, 0],
-              lineStyle: {
-                normal: {
-                  color: 'source',
-                  curveness: 0,
-                  type: 'solid'
-                }
-              }
-            }
-          ]
-        }
-        myChart.setOption(option, true)
-        myChart.hideLoading()
-      })
       // 调性分析
-      this.getTonalAnalysis(this.queryForm)
+      // this.getTonalAnalysis(this.queryForm)
       // 情感占比分析
-      emotionAnalysis(this.queryForm).then(res => {
-        var emotionOption = {
-          title: {
-            text: '情感占比来源',
-            left: 'center'
-          },
-          tooltip: {
-            trigger: 'item',
-            formatter: '{a} <br/>{b} : {c} ({d}%)'
-          },
-          legend: {
-            orient: 'vertical',
-            left: 'left',
-            data: res.data.labelTypes
-          },
-          toolbox: {
-            show: true,
-            feature: {
-              restore: {
-                show: true
-              },
-              saveAsImage: {
-                show: true
-              }
-            }
-          },
-          series: [
-            {
-              name: '情感占比分析',
-              type: 'pie',
-              radius: '55%',
-              center: ['50%', '60%'],
-              data: res.data.analysisCounts,
-              emphasis: {
-                itemStyle: {
-                  shadowBlur: 10,
-                  shadowOffsetX: 0,
-                  shadowColor: 'rgba(0, 0, 0, 0.5)'
-                }
-              },
-              itemStyle: {
-                emphasis: {
-                  shadowBlur: 10,
-                  shadowOffsetX: 0,
-                  shadowColor: 'rgba(0, 0, 0, 0.5)'
-                },
-                normal: {
-                  color: function(params) {
-                    // 自定义颜色
-                    var colorList = ['#13ce66', '#ff4949', '#409EFF']
-                    return colorList[params.dataIndex]
-                  }
-                }
-              }
-            }
-          ]
-        }
-        echarts.init(this.$refs.emotionCharts).setOption(emotionOption)
-      })
+      // emotionAnalysis(this.queryForm).then((res) => {
+      //   var emotionOption = {
+      //     title: {
+      //       text: '情感占比来源',
+      //       left: 'center',
+      //     },
+      //     tooltip: {
+      //       trigger: 'item',
+      //       formatter: '{a} <br/>{b} : {c} ({d}%)',
+      //     },
+      //     legend: {
+      //       orient: 'vertical',
+      //       left: 'left',
+      //       data: res.data.labelTypes,
+      //     },
+      //     toolbox: {
+      //       show: true,
+      //       feature: {
+      //         restore: {
+      //           show: true,
+      //         },
+      //         saveAsImage: {
+      //           show: true,
+      //         },
+      //       },
+      //     },
+      //     series: [
+      //       {
+      //         name: '情感占比分析',
+      //         type: 'pie',
+      //         radius: '55%',
+      //         center: ['50%', '60%'],
+      //         data: res.data.analysisCounts,
+      //         emphasis: {
+      //           itemStyle: {
+      //             shadowBlur: 10,
+      //             shadowOffsetX: 0,
+      //             shadowColor: 'rgba(0, 0, 0, 0.5)',
+      //           },
+      //         },
+      //         itemStyle: {
+      //           emphasis: {
+      //             shadowBlur: 10,
+      //             shadowOffsetX: 0,
+      //             shadowColor: 'rgba(0, 0, 0, 0.5)',
+      //           },
+      //           normal: {
+      //             color: function (params) {
+      //               // 自定义颜色
+      //               var colorList = ['#13ce66', '#ff4949', '#409EFF']
+      //               return colorList[params.dataIndex]
+      //             },
+      //           },
+      //         },
+      //       },
+      //     ],
+      //   }
+      //   echarts.init(this.$refs.emotionCharts).setOption(emotionOption)
+      // })
     },
     // 调性分析
-    getTonalAnalysis(queryForm, i) {
-      tonalAnalysis(queryForm).then(res => {
-        var title = '调性分析图'
-        this.processingData(
-          res.data.labelTypes,
-          res.data.times,
-          res.data.tonalSeriesResList,
-          title,
-          i
-        )
-      })
-    },
+    // getTonalAnalysis(queryForm, i) {
+    //   tonalAnalysis(queryForm).then((res) => {
+    //     var title = '调性分析图'
+    //     this.processingData(
+    //       res.data.labelTypes,
+    //       res.data.times,
+    //       res.data.tonalSeriesResList,
+    //       title,
+    //       i
+    //     )
+    //   })
+    // },
     // 传播趋势
     getspreadTrend(queryForm, i) {
-      spreadTrend(queryForm).then(res => {
+      spreadTrend(queryForm).then((res) => {
         var xAxis = []
         if (res.data.timeList) {
           res.data.timeList.forEach((item, index) => {
@@ -689,11 +588,11 @@ export default {
       }
       if (i === 4 || i === 7) {
         var list = tonalSeries
-        list.forEach(val => {
+        list.forEach((val) => {
           var v = deepClone(val)
           tonalSeriesResList.push(v)
         })
-        tonalSeriesResList.forEach(val => {
+        tonalSeriesResList.forEach((val) => {
           val.data = []
         })
         time.forEach((item, index) => {
@@ -720,59 +619,59 @@ export default {
       if (times[0].length === 4) {
         times.unshift(times[0] - 1)
         times.push(Number(times[times.length - 1]) + 1)
-        tonalSeriesResList.forEach(item => {
+        tonalSeriesResList.forEach((item) => {
           item.data.unshift(0)
           item.data.push(0)
         })
       }
       const color = ['#13ce66', '#ff4949', '#409EFF']
       var tonalityOption = {
-        title: {
-          text: titles
-        },
+        // title: {
+        //   text: titles,
+        // },
         tooltip: {
-          trigger: 'axis'
+          trigger: 'axis',
         },
         legend: {
           color: color,
-          data: labelTypes
+          data: labelTypes,
         },
         grid: {
           left: '3%',
           right: '4%',
           bottom: '3%',
-          containLabel: true
+          containLabel: true,
         },
         toolbox: {
           show: true,
           feature: {
             restore: {
-              show: true
+              show: true,
             },
             saveAsImage: {
-              show: true
-            }
-          }
+              show: true,
+            },
+          },
         },
         xAxis: {
           type: 'category',
           boundaryGap: false,
-          axisLabel: {
-            rotate: -60
-          },
-          data: times
+          // axisLabel: {
+          //   rotate: -60,
+          // },
+          data: times,
         },
         yAxis: {
-          type: 'value'
+          type: 'value',
         },
-        series: tonalSeriesResList
+        series: tonalSeriesResList,
       }
       if (titles === '调性分析图') {
         color.forEach((item, index) => {
           tonalityOption.series[index].itemStyle = {
             normal: {
-              color: item
-            }
+              color: item,
+            },
           }
         })
       }
@@ -784,12 +683,6 @@ export default {
       }
     },
     // 按年查询
-    annualEnquiry() {
-      const i = 4
-      this.queryForm.startTime = ''
-      this.queryForm.endTime = ''
-      this.getTonalAnalysis(this.queryForm, i)
-    },
     annualTrend() {
       const i = 4
       this.queryForm.startTime = ''
@@ -797,25 +690,6 @@ export default {
       this.getspreadTrend(this.queryForm, i)
     },
     // 按月查询
-    monthlyEnquiry() {
-      if (this.monthlyValue) {
-        const i = 7
-        this.queryForm.startTime = new Date(this.monthlyValue[0]).getTime()
-        this.queryForm.endTime =
-          new Date(
-            this.monthlyValue[1].slice(0, 4),
-            this.monthlyValue[1].slice(6, 7),
-            0
-          ).getTime() +
-          24 * 60 * 60 * 1000 -
-          1
-        this.getTonalAnalysis(this.queryForm, i)
-      } else {
-        this.queryForm.startTime = ''
-        this.queryForm.endTime = ''
-        this.getTonalAnalysis(this.queryForm)
-      }
-    },
     monthlyTrend() {
       if (this.monthlyValue) {
         const i = 7
@@ -836,18 +710,6 @@ export default {
       }
     },
     // 按日查询
-    dailyEnquiry() {
-      if (this.dailyValue) {
-        const i = 0
-        this.queryForm.startTime = this.dailyValue[0]
-        this.queryForm.endTime = this.dailyValue[1]
-        this.getTonalAnalysis(this.queryForm, i)
-      } else {
-        this.queryForm.startTime = ''
-        this.queryForm.endTime = ''
-        this.getTonalAnalysis(this.queryForm)
-      }
-    },
     dailyTrend() {
       if (this.dailyValue) {
         const i = 0
@@ -931,12 +793,21 @@ export default {
     hideTrend() {
       this.dailyValue = ''
       this.monthlyValue = ''
-    }
-  }
+    },
+  },
 }
 </script>
 
 <style lang='scss' scoped>
+.app-tabs {
+  text-align: right;
+  // background: #fff;
+  // border-radius: 0.05rem;
+  .el-button {
+    color: #666;
+    padding: 0.05rem 0;
+  }
+}
 .img {
   vertical-align: top;
 }
@@ -947,38 +818,31 @@ export default {
 .loadMore {
   margin: 20px;
 }
-.icon-bell {
-  color: #1296db;
-  font-size: 30px;
-  vertical-align: middle;
-  // transform: rotate(180deg);
-}
 .app-container {
-  .app-tabs {
-    padding-bottom: 20px;
-    .app-label {
-      margin: 0 45px;
-    }
-    .tab-body {
-      .tab-time {
-        margin-right: 20px;
-        font-size: 14px;
-      }
-    }
-    .demonstration {
-      font-size: 14px;
-      margin: 20px;
-    }
+  .app-label {
+    margin: 0 45px;
   }
+  .tab-time {
+    margin-right: 20px;
+    font-size: 14px;
+  }
+  .demonstration {
+    font-size: 14px;
+    margin: 20px;
+  }
+
   .app-title {
     display: inline-block;
-    // border-bottom: 1px solid #ccc;
-    font-size: 20px;
-    margin: 10px 0;
-    .title {
+    font-size: 18px;
+    margin: 4px 0;
+    color: #3b99fb;
+    font-weight: 700;
+    .title_echart {
       display: inline-block;
-      padding: 8px;
-      border-bottom: 5px solid #0984ff;
+      // padding: 08px;
+    }
+    .icon-bell {
+      font-size: 20px;
     }
   }
   .topic {
@@ -986,17 +850,6 @@ export default {
     font-size: 16px;
     text-indent: 2em;
     line-height: 28px;
-  }
-  .body-title {
-    width: 150px;
-    height: 50px;
-    line-height: 50px;
-    text-align: center;
-    background-color: #3488d6;
-    font-size: 20px;
-    color: #fff;
-    border-radius: 0 40px 0 40px;
-    margin-bottom: 20px;
   }
   .app-body {
     margin-left: 90px;
@@ -1011,9 +864,6 @@ export default {
       font-size: 16px;
       text-align: right;
       color: #4ba5fa;
-    }
-    .el-button {
-      border-radius: 10px;
     }
     .content {
       font-size: 14px;
@@ -1034,25 +884,15 @@ export default {
       width: 80%;
     }
   }
-  #emotionCharts,
-  #RouteCharts {
+  #emotionCharts {
     width: 80%;
+    height: 400px;
     margin: 20px 0 0 50px;
   }
-  #tonalityCharts,
   #trendCharts {
     width: 80%;
+    height: 400px;
     margin: 40px 0 0 50px;
-  }
-  #emotionCharts {
-    height: 400px;
-  }
-  #RouteCharts {
-    height: 800px;
-  }
-  #tonalityCharts,
-  #trendCharts {
-    height: 400px;
   }
   #word_cloud_view_id {
     display: inline-block;
